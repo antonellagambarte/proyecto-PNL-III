@@ -1,0 +1,29 @@
+# Configuración del sistema.
+# Las credenciales (OPENAI_API_KEY) van en el .env, nunca en este archivo.
+# Las rutas relativas se toman desde la raíz del proyecto.
+
+llm:
+  modelo: gpt-6-luna
+  timeout_segundos: 60
+
+agentes:
+  max_vueltas: 2            # vueltas máximas entre tutor y verificador
+
+busqueda:
+  # Valores iniciales del ejemplo de la clase 1; se ajustan en el paso 4.
+  k_candidatos: 30          # candidatos de la búsqueda híbrida, antes del re-ranking
+  k_fragmentos: 5           # fragmentos que recibe el tutor, después del re-ranking
+
+chunks:
+  # Valores iniciales del ejemplo de la clase 1; se ajustan en el paso 3.
+  max_tokens: 200
+  solapamiento: 60
+
+rutas:
+  manual_pdf: data/raw/manual_del_conductor.pdf
+  procesados: data/processed
+  indices: data/indices
+  logs: logs
+
+logging:
+  nivel: INFO
