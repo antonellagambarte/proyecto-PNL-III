@@ -1,0 +1,19 @@
+[project]
+name = "asistente-licencia-pba"
+version = "0.1.0"
+description = "Asistente para preparar el examen teórico de la licencia de conducir (PBA) con RAG y dos agentes"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "python-dotenv>=1.2.4",
+    "pyyaml>=6.0.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
