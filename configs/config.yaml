@@ -19,6 +19,7 @@ chunks:
 
 rutas:
   manual_pdf: data/raw/manual_del_conductor.pdf
+  transcripciones: data/raw/tablas_transcriptas.json   # tablas del manual transcriptas a mano
   procesados: data/processed
   indices: data/indices
   logs: logs
