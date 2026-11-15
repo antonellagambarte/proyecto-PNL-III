@@ -1,0 +1,100 @@
+{
+  "descripcion": "Transcripción manual de tablas del manual del conductor PBA 2019 que no se pueden extraer bien del PDF: el texto está dentro de una imagen o la tabla se desordena al extraerla. Cada fila de la tabla está escrita como una oración. El parseo usa este texto en lugar del extraído y marca los chunks con origen 'transcripcion_manual'. Verificado contra el PDF original.",
+  "paginas": {
+    "6": {
+      "motivo": "La tabla de validez de la licencia para motos y cuatriciclos no se extrae: solo salen los títulos.",
+      "texto": [
+        "VALIDEZ DE LA LICENCIA",
+        "MOTOS Y CUATRICICLOS",
+        "Motos y cuatriciclos, 16 años: la licencia dura 1 año. Trámites: original y duplicado. Clases: A.1.1.",
+        "Motos y cuatriciclos, 17 años: la licencia dura 1 año la primera vez y se renueva por 3 años. Trámites: original, duplicado, ampliación y renovación. Clases: A.1.1, A.1.2, A.2.1 y A3.",
+        "Motos y cuatriciclos, 18 años: la licencia dura 5 años. Trámites: original, duplicado, ampliación y renovación. Clases: A.1.1, A.1.2, A.1.3, A.2.1, A.2.2 y A3.",
+        "Motos y cuatriciclos, 19 años: la licencia dura 5 años. Trámites: original, duplicado, ampliación y renovación. Clases: A.1.1, A.1.2, A.1.3, A.2.1, A.2.2 y A3.",
+        "Motos y cuatriciclos, 20 años: la licencia dura 5 años. Trámites: original, duplicado, ampliación y renovación. Clases: A.1.1, A.1.2, A.1.3, A.2.1, A.2.2 y A3.",
+        "Motos y cuatriciclos, de 21 a 65 años: la licencia dura 5 años. Trámites: original, duplicado, ampliación y renovación. Clases: A.1.1, A.1.2, A.1.3, A.1.4, A.2.1, A.2.2 y A3.",
+        "Motos y cuatriciclos, de 66 a 70 años: la licencia dura 3 años. Trámites: original, duplicado, ampliación y renovación. Clases: A.1.1, A.1.2, A.1.3, A.1.4, A.2.1, A.2.2 y A3.",
+        "Motos y cuatriciclos, de 71 años en adelante: la licencia dura 1 año. Trámites: original, duplicado, ampliación y renovación. Clases: A.1.1, A.1.2, A.1.3, A.1.4, A.2.1, A.2.2 y A3."
+      ]
+    },
+    "7": {
+      "motivo": "Las tablas de validez de la licencia para autos y para profesionales no se extraen: la página sale vacía.",
+      "texto": [
+        "AUTOS, CAMIONETAS, CASAS RODANTES, TRACTORES, MAQUINARIAS, TREN AGRÍCOLA",
+        "Autos, camionetas, casas rodantes, tractores, maquinarias y tren agrícola, 17 años: la licencia dura 1 año la primera vez y se renueva por 3 años. Trámites: original, duplicado, ampliación y renovación. Clases: B.1, G.1 y G.2.",
+        "Autos, camionetas, casas rodantes, tractores, maquinarias y tren agrícola, de 18 a 65 años: la licencia dura 5 años. Trámites: original, duplicado, ampliación y renovación. Clases: B.1, B.2, G.1, G.2 y G.3.",
+        "Autos, camionetas, casas rodantes, tractores, maquinarias y tren agrícola, de 66 a 70 años: la licencia dura 3 años. Trámites: original, duplicado, ampliación y renovación. Clases: B.1, B.2, G.1, G.2 y G.3.",
+        "Autos, camionetas, casas rodantes, tractores, maquinarias y tren agrícola, de 71 años en adelante: la licencia dura 1 año. Trámites: original, duplicado, ampliación y renovación. Clases: B.1, B.2, G.1, G.2 y G.3.",
+        "PROFESIONALES",
+        "Profesionales, de 21 a 45 años: la licencia dura 2 años. Trámites: original, duplicado, ampliación y renovación. Clases: C.1, C.2, C.3, D.1, D.2, D.3, D.4, E.1 y E.2.",
+        "Profesionales, de 46 años en adelante: la licencia dura 1 año. Trámites: duplicado y renovación. Clases: C.1, C.2, C.3, D.1, D.2, D.3, D.4, E.1 y E.2."
+      ]
+    },
+    "34": {
+      "motivo": "La tabla de elementos de riesgo en zona rural está dentro de una imagen: no se extrae nada.",
+      "texto": [
+        "ELEMENTOS DE RIESGO, POSIBLE EFECTO Y RECOMENDACIONES",
+        "Animales sueltos. Posible efecto de riesgo: su presencia implica la posibilidad de reacciones inesperadas, si bien no es usual en el ganado. Recomendaciones: respetar la señal específica, mantener la alerta y disminuir la velocidad.",
+        "Alta velocidad. Posible efecto de riesgo: agravamiento del siniestro proporcional a la mayor velocidad. Falta de conciencia del peligro. Recomendaciones: controlar permanentemente. No exceder los límites. Usar el limitador del vehículo.",
+        "Falta de experiencia. Posible efecto de riesgo: le sucede a los que nunca salieron al camino y aun a quienes manejan permanentemente en ciudad. Recomendaciones: tomar conciencia de que el exceso de confianza es un riesgo, igual que la falta de experiencia.",
+        "Heterogeneidad vial. Posible efecto de riesgo: curvas cerradas, peraltes insuficientes, pendientes, angostamiento en puentes, etc. Atender señales. Recomendaciones: esperar siempre la peor configuración de estos elementos. Prestar atención y bajar la velocidad.",
+        "Condiciones climáticas. Posible efecto de riesgo: lluvia, nieve, hielo: incrementan la pérdida de control del vehículo y la siniestralidad. Recomendaciones: en el Capítulo 5 se explica la forma de operar en estas situaciones.",
+        "Cruces de caminos. Posible efecto de riesgo: es alto riesgo, especialmente agravado por la velocidad. Estar atento y respetar las señales. Recomendaciones: siempre bajar la velocidad.",
+        "Rugosidad y adherencia. Posible efecto de riesgo: zona resbaladiza por superficie muy lisa o presencia de polvo, agua o fluidos: pérdida de dominio. Recomendaciones: no frenar sobre ellos, estar atento para hacerlo antes de ingresar, bajar la velocidad.",
+        "Banquina descalzada. Posible efecto de riesgo: escalón entre ella y la calzada. El tirón del volante a alta velocidad, para retornar, origina el efecto latigazo, que lanza al auto hacia la otra mano. Recomendaciones: es una vía de circulación para emergencia. Usarla sólo a baja velocidad y con cuidado.",
+        "Vuelco. Posible efecto de riesgo: es más común en caminos por alta velocidad, giro cerrado de las ruedas y frenada brusca derrapando. Recomendaciones: si sale del pavimento, soltar el acelerador, frenar despacio y no girar. Retomar lentamente.",
+        "Somnolencia. Posible efecto de riesgo: la «hipnosis del camino» produce fatiga prematura, con aumento del tiempo de reacción. Recomendaciones: en el Capítulo 6 se explican las formas de comportarse con seguridad en estos casos."
+      ]
+    },
+    "35": {
+      "motivo": "Continuación de la tabla de elementos de riesgo en zona rural, dentro de una imagen: no se extrae nada.",
+      "texto": [
+        "Distancia de visión. Posible efecto de riesgo: el cansancio o la alta velocidad crean lo que se llama túnel de visión: se pierde la visión secundaria. Recomendaciones: se dejan de ver los elementos al costado de la vía. Disminuir la velocidad, refrescarse.",
+        "Formación de huella. Posible efecto de riesgo: sobre el pavimento, por la circulación de camiones con exceso de peso. Se llenan de agua o polvo. Recomendaciones: se pierde el control por resultar resbaladizo: efecto «aquaplaning».",
+        "Zona de obras. Posible efecto de riesgo: es frecuente que se trabaje sobre la vía sin cortar el tránsito. Estar atentos a las señales y otros datos. Recomendaciones: hay una categoría de «señales transitorias»: prestar atención y obrar en consecuencia."
+      ]
+    },
+    "57": {
+      "motivo": "La tabla de velocidades se extrae desordenada: los valores quedan separados de los vehículos y los nombres de las zonas salen al revés.",
+      "texto": [
+        "LÍMITES MÁXIMOS Y MÍNIMOS DE VELOCIDAD",
+        "Zona urbana, calles, todos los vehículos: velocidad máxima 40 km/h, mínima 20 km/h.",
+        "Zona urbana, avenidas, todos los vehículos: velocidad máxima 60 km/h, mínima 30 km/h.",
+        "Zona urbana, vías semaforizadas, sólo motos y autos: velocidad máxima según la coordinación semafórica, mínima la mitad del máximo.",
+        "Zona urbana, intersecciones, todos los vehículos: velocidad máxima 30 km/h, mínima 15 km/h.",
+        "Zona urbana, establecimientos de alta concentración de personas (escuelas, cines, estadios), todos los vehículos: velocidad máxima 20 km/h, mínima 10 km/h.",
+        "Zona urbana, rutas que cruzan la zona urbana, todos los vehículos: velocidad máxima 60 km/h, mínima 30 km/h.",
+        "Zona rural, carreteras o caminos comunes, motos y automóviles: velocidad máxima 110 km/h.",
+        "Zona rural, carreteras o caminos comunes, camionetas, micros, buses y casas autopropulsadas: velocidad máxima 90 km/h.",
+        "Zona rural, carreteras o caminos comunes, camiones y autos con casa rodante: velocidad máxima 80 km/h.",
+        "Zona rural, semiautopistas o autovías, motos y automóviles: velocidad máxima 120 km/h.",
+        "Zona rural, semiautopistas o autovías, camionetas: velocidad máxima 110 km/h.",
+        "Zona rural, semiautopistas o autovías, restantes vehículos: velocidad máxima ídem carreteras.",
+        "Zona rural, velocidad mínima en carreteras, caminos comunes, semiautopistas y autovías: 40 km/h, salvo maquinaria especial.",
+        "Zona urbana y rural, autopistas, motos y automóviles: velocidad máxima 130 km/h.",
+        "Zona urbana y rural, autopistas, ómnibus y autocasas: velocidad máxima 100 km/h.",
+        "Zona urbana y rural, autopistas, restantes vehículos: velocidad máxima ídem carreteras.",
+        "Zona urbana y rural, autopistas: velocidad mínima 65 km/h.",
+        "Zona urbana y rural, pasos a nivel sin barrera ni semáforo, todos los vehículos: velocidad máxima 20 km/h, mínima 10 km/h."
+      ]
+    },
+    "58": {
+      "motivo": "La tabla de uso de las luces se extrae con celdas mezcladas letra por letra y palabras al revés.",
+      "texto": [
+        "Luces para el alumbrado de la vía.",
+        "Luz 1, frontal, baja o de alcance medio. Color blanco o amarillo, ubicada al frente. Uso: se encienden al disminuir la luz solar y deben quedar siempre encendidas (tormenta, aun de día), salvo cuando corresponden las altas. Características: proyección asimétrica, no encandilante. No pueden ser más de 2 pares.",
+        "Luz 2, frontal, alta o de largo alcance. Color blanco o amarillo, ubicada al frente. Uso: debe usarse sólo en zona rural y autopistas, siempre que no haya niebla, ni se encandile al de enfrente o adelante. Características: puede unificarse con la anterior. No pueden ser más de 2 pares aun separadas.",
+        "Luz 3, frontal, busca huella. Color blanco o amarillo, ubicada al frente o en el techo. Uso: únicamente se pueden usar en caminos de tierra. Opcional. Características: si quedan colocados deben cubrirse totalmente.",
+        "Luz 4, rompeniebla. Color blanco o amarillo adelante y rojo atrás (trasera). Uso: al estar colocadas lo más abajo posible, iluminan el camino sin reflejar en la niebla (ninguna luz la penetra). Opcional. Características: se puede agregar hasta sólo un par adelante y otro atrás.",
+        "Luz 5, de retroceso. Color blanco, ubicada atrás. Uso: encienden siempre que se retroceda. Características: pueden ser una o dos.",
+        "Luz 6, de patente. Ubicada atrás. Uso: se enciende automáticamente con las frontales y las de posición. Características: no debe deslumbrar hacia atrás.",
+        "Luz 7, interior. Color blanco, ubicada en el interior del habitáculo. Uso: se puede encender en cualquier momento para comodidad. Características: no debe deslumbrar al conductor.",
+        "Luces de señalización generales.",
+        "Luz 8, frontal destellador. Color ídem amarillo, ubicada en los faros. Uso: el destello debe utilizarse en intersecciones y sobrepasos, a toda hora. Características: encienden siempre que en cualquier caso.",
+        "Luz 9, de posición delanteras. Color ídem amarillo, ubicadas al frente o en 1-2. Uso: todas las de posición encienden junto con las frontales. Características: indican largo, ancho y sentido de marcha.",
+        "Luz 10, de posición traseras. Color rojo, ubicadas atrás. Uso: deben estar siempre encendidas con poca luz solar. Características: suelen unificarse con 6, 7, 12 y 13.",
+        "Luz 11, de posición laterales. Color amarillo, ubicadas al costado y en los vértices. Uso: sólo para vehículos largos de los servicios de transporte. Características: no hay límite de cantidad o separación.",
+        "Luz 12, de freno. Color rojo más intenso, ubicada atrás y opcional en la luneta. Uso: es importante controlar que funcione siempre. Enciende automáticamente al accionar el comando del freno. Características: es más intensa. Se recomienda colocar la tercera luz a la altura de la luneta."
+      ]
+    }
+  }
+}

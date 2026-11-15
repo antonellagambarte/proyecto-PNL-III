@@ -10,17 +10,16 @@ agentes:
   max_vueltas: 2            # vueltas máximas entre tutor y verificador
 
 busqueda:
-  # Valores iniciales del ejemplo de la clase 1; se ajustan en el paso 4.
   k_candidatos: 30          # candidatos de la búsqueda híbrida, antes del re-ranking
   k_fragmentos: 5           # fragmentos que recibe el tutor, después del re-ranking
 
 chunks:
-  # Valores iniciales del ejemplo de la clase 1; se ajustan en el paso 3.
   max_tokens: 200
   solapamiento: 60
 
 rutas:
   manual_pdf: data/raw/manual_del_conductor.pdf
+  transcripciones: data/raw/tablas_transcriptas.json   # tablas del manual transcriptas a mano
   procesados: data/processed
   indices: data/indices
   logs: logs

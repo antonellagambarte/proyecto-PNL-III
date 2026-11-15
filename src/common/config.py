@@ -30,7 +30,7 @@ def cargar_config(ruta: Path = RUTA_CONFIG) -> dict:
 
 
 def resolver_ruta(valor: str) -> Path:
-    """Devuelve la ruta absoluta; las relativas se toman desde la raíz del proyecto."""
+    """Devuelve la ruta absoluta. Las relativas se toman desde la raíz del proyecto."""
     ruta = Path(valor)
     return ruta if ruta.is_absolute() else RAIZ / ruta
 
