@@ -95,6 +95,23 @@
         "Luz 11, de posición laterales. Color amarillo, ubicadas al costado y en los vértices. Uso: sólo para vehículos largos de los servicios de transporte. Características: no hay límite de cantidad o separación.",
         "Luz 12, de freno. Color rojo más intenso, ubicada atrás y opcional en la luneta. Uso: es importante controlar que funcione siempre. Enciende automáticamente al accionar el comando del freno. Características: es más intensa. Se recomienda colocar la tercera luz a la altura de la luneta."
       ]
+    },
+    "59": {
+      "motivo": "Continuación de la tabla de uso de las luces: se extrae con celdas mezcladas.",
+      "texto": [
+        "Luces de señalización generales (continuación).",
+        "Luz 13, de giro. Color amarillo intenso, ubicadas en las proximidades de los vértices. Uso: deben encenderse cuando se vaya a girar o cambiar de carril, las del costado hacia el que se hará la maniobra. Características: encienden todas las del mismo lado. Puede incluir las laterales n° 11.",
+        "Luz 14, de emergencia. Color amarillo intenso, ubicadas en todas las n° 13. Uso: para situaciones de emergencia o maniobras riesgosas. Características: prenden todas las de posición juntas.",
+        "Luz 15, testigos. Colores varios, ubicadas en el tablero. Uso: indican que están encendidas: la n° 2 con azul, las 9, 10 y 11 con la misma luz de tablero, la 13 con verde y la 14 con rojo (ambas intermitentes).",
+        "Luz 16, diferenciadoras de ancho. Color blanco adelante y rojo atrás. Uso: indican el mayor ancho de la caja (sobresaliente) de los camiones. Características: van en los extremos laterales, arriba.",
+        "Luz 17, indicadoras de tren. Verdes adelante y rojas atrás. Uso: identifican a camiones articulados o con acoplado. Su utilidad es conocer el largo para adelantamientos. Características: son 3 luces que van en la parte central superior, cada 20 cm.",
+        "Luz 18, para pasajeros. Colores varios, ubicadas adelante, arriba. Uso: se combinan los colores de identificación de línea. No pueden ser rojos. Características: pueden ser hasta 4 luces en la parte central superior.",
+        "Luz 19, para escolares. Color ámbar, ubicadas adelante, arriba. Uso: identifica niños. Para maniobras deben prender con las del n° 14.",
+        "Luz 20, de policía y fuerzas de seguridad. Color azul y/o rojo, generalmente en la parte superior. Uso: identifican la función (azul) y cuando están en una emergencia (sólo en este caso) deben usar la roja. Características: pueden ser muchas. Deben acompañarse con sonido de sirena cuando están en emergencia.",
+        "Luz 21, de bomberos. Color rojo, generalmente en la parte superior. Uso: indican función de emergencia: apuntalamiento, explosivos, etc. Características: pueden ser muchas. Deben acompañarse con sonido de sirena cuando están en emergencia.",
+        "Luz 22, de ambulancias. Color verde, generalmente en la parte superior. Uso: identifican función, deben usarse sólo cuando están en servicio. Características: pueden ser muchas. Deben acompañarse con sonido de sirena cuando están en emergencia.",
+        "Luz 23, de funciones sobre la calzada. Color amarillo, generalmente en la parte superior. Uso: para los que tengan una función sobre la calzada y crean un riesgo: auxilio, recolección, reparación, maquinaria especial. Características: no deben usarla repartidores ni servicios privados de vigilancia sin autorización."
+      ]
     }
   }
 }

@@ -1,9 +1,9 @@
 """Chunking: corta cada sección del manual en fragmentos con solapamiento y metadatos.
 
-Adaptado de chunk_text en raglib/documents.py del ejemplo RAG de la clase 1. Igual
-que ahí, un token es una palabra o un número, y cada chunk es una ventana de tokens
-que se solapa con la anterior. Lo que cambia: los chunks no cruzan de una sección a
-otra, y cada uno guarda en qué páginas está su texto.
+Adaptado del chunking del código de la cátedra. Igual que ahí, un token es una
+palabra o un número, y cada chunk es una ventana de tokens que se solapa con la
+anterior. Lo que cambia: los chunks no cruzan de una sección a otra, y cada uno
+guarda en qué páginas está su texto.
 """
 
 import logging
@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 DOCUMENTO = "Manual del conductor PBA"
 EDICION = "2019"
 
-# Mismo criterio de token que el ejemplo de la clase 1: palabras (con tildes) y números.
+# Mismo criterio de token que el código de la cátedra: palabras (con tildes) y números.
 TOKEN = re.compile(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+")
 ESPACIOS = re.compile(r"\s+")
 

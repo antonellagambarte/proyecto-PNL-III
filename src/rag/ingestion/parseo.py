@@ -1,8 +1,8 @@
 """Parseo del manual del conductor: del PDF a secciones con su texto y sus páginas.
 
-Adaptado de raglib/loader_pdfs.py del ejemplo RAG de la clase 1. Además de leer
-el PDF página por página, saca el encabezado y el pie del manual, detecta
-capítulos y secciones, y deja afuera los capítulos que no son de auto particular.
+Adaptado del lector de PDF del código de la cátedra. Además de leer el PDF página
+por página, saca el encabezado y el pie del manual, detecta capítulos y secciones,
+y deja afuera los capítulos que no son de auto particular.
 """
 
 import json
@@ -13,9 +13,9 @@ from pathlib import Path
 import pdfplumber
 
 log = logging.getLogger(__name__)
-# pdfminer, que usa pdfplumber por dentro, avisa de detalles del PDF que no afectan el texto.
-logging.getLogger("pdfminer").setLevel(logging.ERROR)
 
+# Texto que se repite en todas las páginas. Se saca para que no ensucie los chunks.
+# El número de página no se pierde: queda en los metadatos.
 ENCABEZADO = ["Dirección Provincial", "de Política y Seguridad Vial"]
 PIE = "MANUAL DEL CONDUCTOR"
 # Motocicleta (8) y triciclos y cuatriciclos (9). El proyecto es para auto particular.
