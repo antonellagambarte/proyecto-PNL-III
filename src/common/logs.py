@@ -1,7 +1,9 @@
 """Configura el registro de eventos (logging) del sistema.
 
 Los mensajes salen por consola y quedan guardados en logs/app.log, con niveles
-(DEBUG, INFO, WARNING, ERROR). El archivo rota al llegar a 1 MB.
+(DEBUG, INFO, WARNING, ERROR). Para que el archivo no crezca sin límite, cuando
+llega a 1 MB se guarda como app.log.1 y se empieza uno nuevo. Se conservan los
+3 archivos anteriores.
 """
 
 import logging
@@ -18,18 +20,9 @@ def configurar_logging(carpeta: Path, nivel: str = "INFO") -> Path:
     carpeta.mkdir(parents=True, exist_ok=True)
     ruta_archivo = carpeta / NOMBRE_ARCHIVO
 
-    raiz = logging.getLogger()
-    raiz.setLevel(nivel)
-    # Si se llama más de una vez, se reemplazan los manejadores para no duplicar mensajes.
-    for manejador in list(raiz.handlers):
-        raiz.removeHandler(manejador)
-        manejador.close()
-
-    formato = logging.Formatter(FORMATO)
     consola = logging.StreamHandler()
-    consola.setFormatter(formato)
     archivo = RotatingFileHandler(ruta_archivo, maxBytes=1_000_000, backupCount=3, encoding="utf-8")
-    archivo.setFormatter(formato)
-    raiz.addHandler(consola)
-    raiz.addHandler(archivo)
+    # force=True saca los handlers de una llamada anterior. Si no, se sumarían
+    # a los nuevos y cada mensaje saldría repetido.
+    logging.basicConfig(level=nivel, format=FORMATO, handlers=[consola, archivo], force=True)
     return ruta_archivo
