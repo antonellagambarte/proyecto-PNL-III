@@ -10,6 +10,8 @@ agentes:
   max_vueltas: 2            # vueltas máximas entre tutor y verificador
 
 busqueda:
+  modelo_embeddings: intfloat/multilingual-e5-small              # búsqueda por significado
+  modelo_reranking: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1   # reordena los candidatos
   k_candidatos: 30          # candidatos de la búsqueda híbrida, antes del re-ranking
   k_fragmentos: 5           # fragmentos que recibe el tutor, después del re-ranking
 

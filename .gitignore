@@ -22,6 +22,9 @@ htmlcov/
 logs/
 tmp/
 
+# Índices de búsqueda: se arman con scripts/ingestar.py
+data/indices/
+
 # Editor y sistema operativo
 .vscode/
 .idea/
