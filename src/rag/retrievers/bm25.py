@@ -11,6 +11,7 @@ import re
 import unicodedata
 from pathlib import Path
 
+import numpy as np
 from rank_bm25 import BM25Okapi
 
 from src.rag.retrievers.texto import texto_para_indexar
@@ -64,14 +65,15 @@ class IndiceBM25:
             datos = json.load(archivo)
         return cls(datos["ids"], datos["tokens"])
 
-    def buscar(self, consulta: str, k: int) -> list[tuple[str, float]]:
-        """Devuelve hasta k chunks con su puntaje, del más al menos relevante.
+    def buscar(self, consulta: str, k: int) -> list[tuple[int, float]]:
+        """Devuelve la posición de hasta k chunks y su puntaje, del más al menos relevante.
 
-        Solo devuelve chunks que comparten alguna palabra con la consulta (puntaje mayor a 0).
+        Solo devuelve chunks que comparten alguna palabra con la consulta (puntaje mayor a 0),
+        para no meter ruido en la fusión.
         """
         palabras = tokenizar(consulta)
         if not palabras:
             return []
         puntajes = self.bm25.get_scores(palabras)
-        orden = sorted(range(len(self.ids)), key=lambda i: puntajes[i], reverse=True)
-        return [(self.ids[i], float(puntajes[i])) for i in orden[:k] if puntajes[i] > 0]
+        orden = np.argsort(puntajes)[::-1][:k]
+        return [(int(i), float(puntajes[i])) for i in orden if puntajes[i] > 0]

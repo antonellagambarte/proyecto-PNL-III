@@ -1,19 +1,18 @@
 """Búsqueda híbrida: palabras (BM25) más significado (vectores), fusión RRF y re-ranking.
 
-Adaptado del pipeline híbrido del código de la cátedra: la fórmula de fusión y el
-re-ranking con un cross-encoder son los mismos. Lo que cambia: la búsqueda por
-significado usa Chroma en lugar de Pinecone, y los modelos son multilingües.
+Adaptado del pipeline híbrido del código de la cátedra: la fusión y el re-ranking son
+los mismos. Lo que cambia: la búsqueda por significado usa Chroma en lugar de Pinecone,
+los modelos son multilingües y cada fragmento sale con su cita.
 """
 
 import logging
-
-from sentence_transformers import CrossEncoder
 
 from src.common.config import resolver_ruta
 from src.common.jsonl import leer_jsonl
 from src.rag.retrievers.bm25 import IndiceBM25
 from src.rag.retrievers.citas import formatear_cita
 from src.rag.retrievers.densa import IndiceDenso, cargar_modelo
+from src.rag.retrievers.reranker import Reranker
 
 log = logging.getLogger(__name__)
 
@@ -21,14 +20,15 @@ log = logging.getLogger(__name__)
 def rrf(*listas: list[str], k: float = 60.0) -> list[str]:
     """Fusiona varias listas ordenadas de ids (Reciprocal Rank Fusion).
 
-    Cada id suma 1 / (k + posición) por cada lista en la que aparece, así que los que
-    están arriba en varias listas suben. Misma fórmula que el código de la cátedra.
+    Cada id suma 1 / (k + puesto) por cada lista en la que aparece, donde el primero de
+    la lista tiene puesto 1. Así los que están arriba en varias listas suben.
     """
     puntajes: dict[str, float] = {}
     for lista in listas:
-        for posicion, id_ in enumerate(lista, start=1):
-            puntajes[id_] = puntajes.get(id_, 0.0) + 1.0 / (k + posicion)
-    return sorted(puntajes, key=puntajes.get, reverse=True)
+        for posicion, id_ in enumerate(lista):
+            puntajes[id_] = puntajes.get(id_, 0.0) + 1.0 / (k + posicion + 1.0)
+    ordenados = sorted(puntajes.items(), key=lambda par: par[1], reverse=True)
+    return [id_ for id_, _ in ordenados]
 
 
 class BuscadorHibrido:
@@ -43,7 +43,8 @@ class BuscadorHibrido:
 
     def candidatos(self, consulta: str) -> list[str]:
         """Los k_candidatos ids que salen de fusionar las dos búsquedas."""
-        por_palabras = [id_ for id_, _ in self.bm25.buscar(consulta, self.k_candidatos)]
+        # BM25 devuelve la posición de cada chunk: se traduce a su id para fusionar.
+        por_palabras = [self.bm25.ids[i] for i, _ in self.bm25.buscar(consulta, self.k_candidatos)]
         por_significado = [id_ for id_, _ in self.densa.buscar(consulta, self.k_candidatos)]
         return rrf(por_palabras, por_significado)[: self.k_candidatos]
 
@@ -52,20 +53,16 @@ class BuscadorHibrido:
         if not 0 < k <= self.k_candidatos:
             raise ValueError(f"k tiene que estar entre 1 y {self.k_candidatos}.")
         ids = self.candidatos(consulta)
-        if not ids:
-            return []
-        # El re-ranker lee la pregunta junto con el texto completo de cada candidato.
-        puntajes = self.reranker.predict([(consulta, self.chunks[id_]["texto"]) for id_ in ids])
-        mejores = sorted(zip(ids, puntajes), key=lambda par: par[1], reverse=True)[:k]
+        reordenados = self.reranker.reordenar(consulta, [(id_, self.chunks[id_]["texto"]) for id_ in ids])
         return [
             {
                 "id": id_,
                 "texto": self.chunks[id_]["texto"],
                 "metadata": self.chunks[id_]["metadata"],
                 "cita": formatear_cita(self.chunks[id_]["metadata"]),
-                "puntaje": float(puntaje),
+                "puntaje": puntaje,
             }
-            for id_, puntaje in mejores
+            for id_, puntaje in reordenados[:k]
         ]
 
 
@@ -77,7 +74,7 @@ def crear_buscador(config: dict) -> BuscadorHibrido:
     return BuscadorHibrido(
         bm25=IndiceBM25.cargar(indices / "bm25.json"),
         densa=IndiceDenso(indices / "chroma", cargar_modelo(busqueda["modelo_embeddings"])),
-        reranker=CrossEncoder(busqueda["modelo_reranking"]),
+        reranker=Reranker(busqueda["modelo_reranking"]),
         chunks=chunks,
         k_candidatos=busqueda["k_candidatos"],
     )
