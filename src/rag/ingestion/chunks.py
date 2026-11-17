@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 DOCUMENTO = "Manual del conductor PBA"
 EDICION = "2019"
 
-# Mismo criterio de token que el código de la cátedra: palabras (con tildes) y números.
+# Un token es una palabra (con tildes) o un número.
 TOKEN = re.compile(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+")
 ESPACIOS = re.compile(r"\s+")
 

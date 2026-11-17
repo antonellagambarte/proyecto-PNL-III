@@ -1,8 +1,7 @@
 """Búsqueda por significado: los vectores de los chunks guardados en Chroma.
 
-Reemplaza la búsqueda vectorial en Pinecone del código de la cátedra. Chroma corre
-local, sin cuenta ni key. Los vectores los calcula multilingual-e5-small, que pide
-marcar cada texto como pregunta («query: ») o como fragmento («passage: »).
+Chroma corre local, sin cuenta ni key. Los vectores los calcula multilingual-e5-small,
+que pide marcar cada texto como pregunta («query: ») o como fragmento («passage: »).
 """
 
 import logging
