@@ -15,19 +15,28 @@ import pdfplumber
 
 log = logging.getLogger(__name__)
 
-# Color de las letras de la respuesta correcta, en CMYK, como lo da pdfplumber.
+# Texto que se repite en todas las páginas. Se saca para que no se mezcle con las preguntas.
+# El número de página va en la última línea, debajo del pie.
+ENCABEZADO = ("Dirección Provincial", "de Política y Seguridad Vial")
+PIE = "BATERÍA DE PREGUNTAS Y RESPUESTAS"
+
+# Los valores fijos de este bloque se midieron en todo el cuestionario con
+# scripts/explorar_cuestionario.py.
+
+# Color de las letras de la respuesta correcta, en CMYK, como lo da pdfplumber. Las
+# opciones correctas tienen todas este color, que en el PDF se ve verde.
 VERDE = (0.48, 0.0, 0.89, 0.0)
-# Lo que está más arriba o más abajo es el encabezado o el pie de la página.
-CONTENIDO_DESDE, CONTENIDO_HASTA = 70, 780
-# Una línea continúa la anterior si está corrida a la derecha del margen, si está muy pegada
-# a la de arriba o si empieza en minúscula (cuando la opción sigue en la página siguiente).
-# Dentro de un párrafo las líneas están a unos 13 puntos. Entre preguntas, a unos 37.
+# Casi todas las líneas arrancan a 0 a 3 puntos del margen, y las que continúan una opción,
+# a 13 o 14. Entre 4 y 12 no hay ninguna.
 SANGRIA = 8
+# Las líneas de un mismo enunciado u opción están a 13 puntos, de una opción a la siguiente
+# a 19, y entre el enunciado y las opciones o entre preguntas, a 26 o más. Entre 15 y 17 no
+# hay ninguna.
 INTERLINEADO = 16
 
-# Título de sección. Ejemplos: "5) Preguntas para todas las clases: Semáforo",
-# "6) Peguntas para todas las clases: Velocidades" (así, con error) y
-# "PREGUNTAS ESPECÍFICAS SEGÚN CLASE".
+# Línea que abre una sección del cuestionario, como "5) Preguntas para todas las clases: Semáforo".
+# También reconoce "6) Peguntas para..." (sin la «r», como está escrito en el PDF) y el título en mayúsculas
+# "PREGUNTAS ESPECÍFICAS SEGÚN CLASE", que separa las preguntas generales de las de cada clase.
 TITULO = re.compile(r"^(?:\d+\)\s*)?(?:Pr?eguntas para|PREGUNTAS)")
 # En negrita, un número con paréntesis también abre una sección. Ejemplo: "14) Seguridad Activa y Pasiva".
 TITULO_NUMERADO = re.compile(r"^\d+\)\s")
@@ -41,12 +50,15 @@ LETRAS = "ABCDEFGH"
 NUMERO = re.compile(r"^\d+\)\s*")
 
 
+def color_de(letras: list[dict]) -> tuple:
+    """El color que tiene la mayoría de las letras, redondeado a dos decimales."""
+    colores = Counter(tuple(round(c, 2) for c in (letra["non_stroking_color"] or ())) for letra in letras)
+    return colores.most_common(1)[0][0] if colores else ()
+
+
 def _es_verde(letras: list[dict]) -> bool:
     """Si la mayoría de las letras están en verde."""
-    if not letras:
-        return False
-    colores = Counter(tuple(round(c, 2) for c in (letra["non_stroking_color"] or ())) for letra in letras)
-    return colores.most_common(1)[0][0] == VERDE
+    return color_de(letras) == VERDE
 
 
 def _renglones_de_linea(linea: dict, pagina: int, continua: bool) -> list[dict]:
@@ -64,6 +76,14 @@ def _renglones_de_linea(linea: dict, pagina: int, continua: bool) -> list[dict]:
     return [{"pagina": pagina, "texto": texto, "verde": _es_verde(letras), "negrita": negrita, "continua": continua}]
 
 
+def lineas_de_contenido(pagina, numero: int) -> list[dict]:
+    """Las líneas de una página sin el encabezado, el pie y el número de página."""
+    lineas = pagina.extract_text_lines()
+    if lineas and lineas[-1]["text"].strip() == str(numero):
+        lineas = lineas[:-1]
+    return [linea for linea in lineas if linea["text"].strip() not in (*ENCABEZADO, PIE)]
+
+
 def leer_renglones(ruta_pdf: Path) -> list[dict]:
     """Lee el PDF y devuelve sus líneas y sus imágenes en el orden en que aparecen.
 
@@ -73,22 +93,17 @@ def leer_renglones(ruta_pdf: Path) -> list[dict]:
     renglones = []
     with pdfplumber.open(str(ruta_pdf)) as pdf:
         for numero, pagina in enumerate(pdf.pages, start=1):
-            lineas = [
-                linea for linea in pagina.extract_text_lines()
-                if CONTENIDO_DESDE < linea["top"] < CONTENIDO_HASTA
-            ]
+            lineas = lineas_de_contenido(pagina, numero)
             # El margen izquierdo cambia un poco de una página a otra.
             margen = min((linea["x0"] for linea in lineas), default=0)
             elementos = []
             for i, linea in enumerate(lineas):
+                # Continúa la de arriba si está pegada, si está corrida a la derecha o si empieza
+                # en minúscula (una opción que sigue en la página siguiente).
                 pegada = i > 0 and linea["top"] - lineas[i - 1]["top"] < INTERLINEADO
                 continua = pegada or linea["x0"] > margen + SANGRIA or linea["text"][:1].islower()
                 elementos.append((linea["top"], _renglones_de_linea(linea, numero, continua)))
-            elementos += [
-                (imagen["top"], [{"pagina": numero, "imagen": True}])
-                for imagen in pagina.images
-                if CONTENIDO_DESDE < imagen["top"] < CONTENIDO_HASTA
-            ]
+            elementos += [(imagen["top"], [{"pagina": numero, "imagen": True}]) for imagen in pagina.images]
             for _, grupo in sorted(elementos, key=lambda par: par[0]):
                 renglones.extend(grupo)
     return renglones
