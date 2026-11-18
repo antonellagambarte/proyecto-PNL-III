@@ -39,7 +39,8 @@ def test_verdadero_falso_y_numero():
         renglon("• Verdadero."),
         renglon("• Falso.", verde=True),
     ])
-    # La 45 no tiene opciones, así que se descarta y no se mezcla con la 46.
+    # La 45 no tiene opciones, así que se descarta y no se mezcla con la 46. Imita la
+    # pregunta 137 del cuestionario (páginas 61 y 62), que es una tabla para completar.
     assert [p["pregunta"] for p in preguntas] == ["Es recomendable frenar sobre zona resbaladiza."]
     assert preguntas[0]["correctas"] == ["Falso."]
 
