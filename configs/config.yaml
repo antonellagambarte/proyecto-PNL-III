@@ -23,6 +23,8 @@ chunks:
 rutas:
   manual_pdf: data/raw/manual_del_conductor.pdf
   transcripciones: data/raw/tablas_transcriptas.json   # tablas del manual transcriptas a mano
+  cuestionario: data/raw/cuestionario.pdf              # preguntas oficiales del examen teórico
+  intermedios: data/interim
   procesados: data/processed
   indices: data/indices
   logs: logs
