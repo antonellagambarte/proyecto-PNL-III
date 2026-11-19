@@ -20,6 +20,9 @@ chunks:
   max_tokens: 200
   solapamiento: 60
 
+evaluacion:
+  ks: [5, 10]               # fragmentos que se miran al calcular las métricas (el tutor recibe 5)
+
 rutas:
   manual_pdf: data/raw/manual_del_conductor.pdf
   transcripciones: data/raw/tablas_transcriptas.json   # tablas del manual transcriptas a mano
@@ -27,6 +30,7 @@ rutas:
   intermedios: data/interim
   procesados: data/processed
   indices: data/indices
+  reportes: reports
   logs: logs
 
 logging:
