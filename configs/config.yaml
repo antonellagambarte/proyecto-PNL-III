@@ -5,9 +5,15 @@
 llm:
   modelo: gpt-6-luna
   timeout_segundos: 60
+  reintentos: 2             # si OpenAI falla o no responde a tiempo, se reintenta antes de dar error
 
 agentes:
   max_vueltas: 2            # vueltas máximas entre tutor y verificador
+  max_busquedas: 2          # búsquedas del tutor en cada vuelta: una y, si no alcanza, otra con otras palabras
+
+memoria:
+  max_tokens: 768           # tamaño máximo de la charla anterior que ven los agentes: si lo pasa, se resume lo más viejo
+  max_tokens_resumen: 512   # lugar reservado para ese resumen dentro de los max_tokens
 
 busqueda:
   modelo_embeddings: intfloat/multilingual-e5-small              # búsqueda por significado
