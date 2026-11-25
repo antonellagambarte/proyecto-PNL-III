@@ -5,7 +5,7 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from pydantic import ValidationError
 
-from src.agents.esquemas import Fragmento, Veredicto
+from src.agents.esquemas import Fragmento, RespuestaTutor, Veredicto
 from src.agents.tutor import Tutor
 from src.graphs.workflows.tutor_verificador import entrada
 from src.tools.builtin.buscar_en_manual import crear_buscar_en_manual, formatear
@@ -26,6 +26,12 @@ def test_veredicto_lista_cerrada():
     assert Veredicto(veredicto="corregir", motivo="falta la cita").veredicto == "corregir"
     with pytest.raises(ValidationError):
         Veredicto(veredicto="ir_al_paso_3", motivo="otro camino")
+
+
+def test_opcion_vacia():
+    """Una opción en blanco se guarda como None, igual que si no se eligió ninguna."""
+    assert RespuestaTutor(respuesta="60 km/h", opcion_elegida="").opcion_elegida is None
+    assert RespuestaTutor(respuesta="60 km/h", opcion_elegida="60 km.").opcion_elegida == "60 km."
 
 
 def test_formato():

@@ -5,7 +5,7 @@ from typing import Annotated, Any, Literal, TypedDict
 
 from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class Fragmento(BaseModel):
@@ -32,6 +32,12 @@ class RespuestaTutor(BaseModel):
         default_factory=list,
         description="Identificadores de los fragmentos que respaldan la respuesta. Vacía si el manual no la respalda.",
     )
+
+    @field_validator("opcion_elegida")
+    @classmethod
+    def vacia_es_nada(cls, valor: str | None) -> str | None:
+        """Si no eligió, el modelo a veces devuelve "". Se guarda siempre como None."""
+        return valor or None
 
 
 class Veredicto(BaseModel):
