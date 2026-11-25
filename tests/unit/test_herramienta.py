@@ -1,9 +1,13 @@
-"""Tests de los esquemas y de la herramienta del tutor. Usan un buscador falso, sin modelos."""
+"""Tests de los esquemas y de la herramienta del tutor. Usan un buscador y un modelo falsos."""
 
 import pytest
+from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from langchain_core.messages import AIMessage
 from pydantic import ValidationError
 
 from src.agents.esquemas import Fragmento, Veredicto
+from src.agents.tutor import Tutor
+from src.graphs.workflows.tutor_verificador import entrada
 from src.tools.builtin.buscar_en_manual import crear_buscar_en_manual, formatear
 
 
@@ -39,3 +43,27 @@ def test_herramienta():
     assert 'id="pba2019-c04-s4.3-002"' in mensaje.content
     with pytest.raises(ValidationError):
         buscar.invoke({"consulta": "velocidad", "k": 50})
+
+
+class LLMFalso(GenericFakeChatModel):
+    """Modelo que devuelve mensajes ya escritos. Acepta herramientas, pero no las usa."""
+
+    def bind_tools(self, *args, **kwargs):
+        return self
+
+
+def pedido(id_, nombre, **args):
+    """Mensaje del modelo que pide usar una herramienta."""
+    return AIMessage("", tool_calls=[{"name": nombre, "args": args, "id": id_}])
+
+
+def test_busquedas_frenadas():
+    """El registro no cuenta las búsquedas que frenó el tope."""
+    llm = LLMFalso(messages=iter([
+        pedido("1", "buscar_en_manual", consulta="velocidad en avenidas"),
+        pedido("2", "buscar_en_manual", consulta="velocidad en calles"),
+        pedido("3", "RespuestaTutor", respuesta="60 km/h", citas=[]),
+    ]))
+    tutor = Tutor(llm, crear_buscar_en_manual(BuscadorFalso(), k_max=5), max_busquedas=1)
+    estado = tutor({**entrada("¿Velocidad máxima en avenidas?", None), "conversacion_resumida": []})
+    assert estado["registro"][0]["consultas"] == ["velocidad en avenidas"]

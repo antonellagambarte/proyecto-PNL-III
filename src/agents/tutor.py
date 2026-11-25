@@ -72,11 +72,12 @@ class Tutor:
         de_esta_vuelta = resultado["messages"][len(mensajes):]
         # Los fragmentos vienen aparte del texto, en el artifact de cada respuesta de la herramienta.
         nuevos = [f for m in de_esta_vuelta if isinstance(m, ToolMessage) and m.artifact for f in m.artifact]
-        # Las consultas que escribió el tutor, para el registro.
+        # Las consultas que se buscaron, para el registro. Las que frenó el tope de búsquedas no cuentan.
+        buscadas = {m.tool_call_id for m in de_esta_vuelta if isinstance(m, ToolMessage) and m.status == "success"}
         consultas = [
             llamada["args"].get("consulta", "")
             for m in de_esta_vuelta if isinstance(m, AIMessage)
-            for llamada in m.tool_calls if llamada["name"] == "buscar_en_manual"
+            for llamada in m.tool_calls if llamada["name"] == "buscar_en_manual" and llamada["id"] in buscadas
         ]
         borrador = resultado["structured_response"]
         vuelta = estado["vueltas"] + 1
