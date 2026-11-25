@@ -21,7 +21,7 @@ pantalla:
 busqueda:
   modelo_embeddings: intfloat/multilingual-e5-small              # búsqueda por significado
   modelo_reranking: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1   # reordena los candidatos
-  max_por_seccion: 2        # chunks de una misma sección en los resultados, después del re-ranking
+  max_por_seccion: 3        # chunks de una misma sección en los resultados, después del re-ranking (con 2, Recall@5 0,950; con 3, 0,975)
   k_candidatos: 30          # candidatos de la búsqueda híbrida, antes del re-ranking
   k_fragmentos: 5           # fragmentos que recibe el tutor, después del re-ranking
 
