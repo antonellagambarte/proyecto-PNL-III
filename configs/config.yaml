@@ -5,9 +5,18 @@
 llm:
   modelo: gpt-6-luna
   timeout_segundos: 60
+  reintentos: 2             # si OpenAI falla o no responde a tiempo, se reintenta antes de dar error
 
 agentes:
   max_vueltas: 2            # vueltas máximas entre tutor y verificador
+  max_busquedas: 2          # búsquedas del tutor en cada vuelta: una y, si no alcanza, otra con otras palabras
+
+memoria:
+  max_tokens: 768           # cuando la charla anterior pasa de este tamaño, se resume
+  max_tokens_resumen: 512   # lugar reservado para el resumen dentro de los max_tokens (no limita su largo)
+
+pantalla:
+  url_api: http://127.0.0.1:8000   # dónde escucha la API: esta misma máquina y el puerto que usa uvicorn por defecto
 
 busqueda:
   modelo_embeddings: intfloat/multilingual-e5-small              # búsqueda por significado
@@ -20,6 +29,9 @@ chunks:
   max_tokens: 200
   solapamiento: 60
 
+evaluacion:
+  ks: [5, 10]               # fragmentos que se miran al calcular las métricas (el tutor recibe 5)
+
 rutas:
   manual_pdf: data/raw/manual_del_conductor.pdf
   transcripciones: data/raw/tablas_transcriptas.json   # tablas del manual transcriptas a mano
@@ -27,6 +39,7 @@ rutas:
   intermedios: data/interim
   procesados: data/processed
   indices: data/indices
+  reportes: reports
   logs: logs
 
 logging:

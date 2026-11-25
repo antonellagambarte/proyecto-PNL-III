@@ -1,17 +1,26 @@
 [project]
 name = "asistente-licencia-pba"
 version = "0.1.0"
-description = "Asistente para preparar el examen teórico de la licencia de conducir (PBA) con RAG y dos agentes"
+description = "Asistente de estudio para el examen teórico de la licencia de conducir (PBA) con RAG y dos agentes"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "chromadb>=1.5.9",
+    "fastapi>=0.165.0",
+    "httpx>=0.28.1",
+    "langchain>=1.5.2",
+    "langchain-openai>=1.8.5",
+    "langgraph>=1.2.24",
+    "langmem>=0.0.30",
     "numpy>=2.5.4",
+    "pandas>=3.1.1",
     "pdfplumber>=0.11.10",
     "python-dotenv>=1.2.4",
     "pyyaml>=6.0.3",
     "rank-bm25>=0.2.2",
     "sentence-transformers>=6.3.0",
+    "streamlit>=1.67.0",
+    "uvicorn>=0.54.0",
 ]
 
 [tool.pytest.ini_options]
