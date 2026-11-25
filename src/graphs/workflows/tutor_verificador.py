@@ -67,7 +67,8 @@ def armar_respuesta(estado: Estado) -> dict:
     return {
         "respuesta": borrador.respuesta,
         "opcion_elegida": borrador.opcion_elegida,
-        "citas": [cita_de[id_] for id_ in borrador.citas if id_ in cita_de],
+        # Dos fragmentos de la misma página dan la misma cita: se muestra una sola vez.
+        "citas": list(dict.fromkeys(cita_de[id_] for id_ in borrador.citas if id_ in cita_de)),
         "veredicto": estado["veredicto"].veredicto,
         "vueltas": estado["vueltas"],
         "registro": estado["registro"],

@@ -144,8 +144,9 @@ def test_resumen():
 
 
 def test_citas():
-    """Las citas salen de los fragmentos recuperados. Un id que no está entre ellos no se cita."""
-    estado = {"pregunta": "x", "opciones": None, "fragmentos": [FRAGMENTO], "vueltas": 1, "registro": [],
-              "borrador": RespuestaTutor(respuesta="60 km/h", citas=["f1", "inventado"]),
+    """Las citas salen de los fragmentos recuperados y sin repetir. Un id que no está entre ellos no se cita."""
+    otro = Fragmento(id="f2", cita=FRAGMENTO.cita, texto="Otro pedazo de la misma página.")
+    estado = {"pregunta": "x", "opciones": None, "fragmentos": [FRAGMENTO, otro], "vueltas": 1, "registro": [],
+              "borrador": RespuestaTutor(respuesta="60 km/h", citas=["f1", "f2", "inventado"]),
               "veredicto": Veredicto(veredicto="aprobada", motivo="ok")}
     assert armar_respuesta(estado)["citas"] == ["cap. 4, secc. 4.3, p. 57"]
