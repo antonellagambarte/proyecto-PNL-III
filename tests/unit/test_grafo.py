@@ -6,6 +6,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from src.agents.esquemas import Fragmento, RespuestaTutor, Veredicto
 from src.agents.memoria import crear_memoria
 from src.agents.tutor import mensajes_para_tutor
+from src.agents.verificador import mensaje_para_verificador
 from src.graphs.workflows.tutor_verificador import SIN_RESPALDO, armar_respuesta, crear_grafo, entrada
 
 FRAGMENTO = Fragmento(id="f1", cita="cap. 4, secc. 4.3, p. 57", texto="Avenidas: máxima 60 km/h.")
@@ -108,6 +109,17 @@ def test_charla_en_el_mensaje():
     assert texto.endswith("Pregunta: ¿Y en autopista?")
 
 
+def test_consultas_al_verificador():
+    """El verificador recibe las consultas del tutor de todas las vueltas, para saber si ya se buscó más de una vez."""
+    estado = {"pregunta": "¿Cuál es el objetivo de la VTV?", "opciones": None, "fragmentos": [FRAGMENTO],
+              "conversacion_resumida": [], "borrador": RespuestaTutor(respuesta="El manual no lo dice."),
+              "registro": [{"agente": "tutor", "vuelta": 1, "consultas": ["objetivo de la VTV"]},
+                           {"agente": "verificador", "vuelta": 1},
+                           {"agente": "tutor", "vuelta": 2, "consultas": ["para qué sirve la VTV"]}]}
+    mensaje = mensaje_para_verificador(estado)
+    assert "<consultas>\n- objetivo de la VTV\n- para qué sirve la VTV\n</consultas>" in mensaje
+
+
 def test_memoria():
     """En la misma sesión, la pregunta siguiente recibe la charla anterior. En otra sesión, no."""
     tutor = TutorFalso()
@@ -122,7 +134,7 @@ def test_memoria():
 
 
 def test_resumen():
-    """Cuando la charla pasa del tamaño máximo, lo más viejo llega resumido."""
+    """Cuando la charla pasa del tamaño máximo, llega resumida."""
     tutor = TutorFalso()
     grafo = crear_grafo(tutor, VerificadorFalso(*["aprobada"] * 4), memoria_falsa(max_tokens=40), 2)
     for pregunta in ["¿Velocidad máxima en avenidas?", "¿Y en autopista?", "¿Y en calles?", "¿Y en rutas?"]:

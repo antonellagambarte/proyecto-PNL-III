@@ -12,14 +12,21 @@ from src.tools.builtin.buscar_en_manual import formatear
 
 
 def mensaje_para_verificador(estado: Estado) -> str:
-    """Arma lo que recibe el verificador: la charla anterior (si hay), la pregunta, el borrador y los fragmentos, cada uno entre marcas."""
+    """Arma lo que recibe el verificador, cada parte entre marcas.
+
+    La charla anterior (si hay), la pregunta, las consultas que hizo el tutor, el borrador y
+    los fragmentos. Con las consultas sabe si ya se buscó más de una vez.
+    """
     borrador = estado["borrador"]
     opciones = "\n".join(f"- {opcion}" for opcion in estado["opciones"] or [])
     charla = ""
     if estado["conversacion_resumida"]:
         charla = f"Charla anterior:\n{formatear_conversacion(estado['conversacion_resumida'])}\n\n"
+    consultas = [c for paso in estado["registro"] if paso["agente"] == "tutor" for c in paso["consultas"] if c]
+    buscado = "\n".join(f"- {consulta}" for consulta in consultas) or "-"
     return (
         f"{charla}<pregunta>\n{estado['pregunta']}\n{opciones}\n</pregunta>\n\n"
+        f"<consultas>\n{buscado}\n</consultas>\n\n"
         f"<borrador>\nRespuesta: {borrador.respuesta}\n"
         f"Opción elegida: {borrador.opcion_elegida or '-'}\n"
         f"Citas: {', '.join(borrador.citas) or '-'}\n</borrador>\n\n"
