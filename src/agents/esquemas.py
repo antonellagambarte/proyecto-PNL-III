@@ -59,16 +59,17 @@ class Estado(TypedDict):
     borrador: RespuestaTutor | None
     veredicto: Veredicto | None
     vueltas: int
-    # Conversación del tutor (sus búsquedas, los fragmentos y su respuesta). Si el verificador
-    # no aprueba, en la vuelta siguiente el tutor la continúa.
+    # Historial del tutor en esta pregunta: qué buscó, los fragmentos y lo que respondió. Lo usa
+    # solo el tutor, para corregir si el verificador no aprueba. El verificador no lo ve.
     mensajes_tutor: list[AnyMessage]
-    # Bitácora de lo que hizo cada agente en cada vuelta, para revisar y auditar. Ningún agente
-    # la lee. Empieza vacía en cada pregunta y cada nodo le suma su entrada.
+    # Registro de lo que hizo cada agente en cada vuelta, para revisar qué pasó y auditar.
+    # Ningún agente lo lee. Empieza vacío en cada pregunta y cada nodo le suma su entrada.
     registro: list[dict]
     # Charla de la sesión: cada pregunta con la respuesta que recibió quien estudia. El
     # checkpointer la guarda entre preguntas y add_messages suma los mensajes nuevos al final.
     conversacion: Annotated[list[AnyMessage], add_messages]
-    # Lo que ven los agentes de esa charla: el resumen de lo más viejo y los mensajes recientes.
+    # Lo que ven los agentes de esa charla: todo textual o, si se alargó, el resumen y los
+    # mensajes que vinieron después.
     conversacion_resumida: list[AnyMessage]
     # Donde langmem guarda el resumen, para extenderlo en la pregunta siguiente.
     context: dict[str, Any]

@@ -12,8 +12,8 @@ agentes:
   max_busquedas: 2          # búsquedas del tutor en cada vuelta: una y, si no alcanza, otra con otras palabras
 
 memoria:
-  max_tokens: 768           # tamaño máximo de la charla anterior que ven los agentes: si lo pasa, se resume lo más viejo
-  max_tokens_resumen: 512   # lugar reservado para ese resumen dentro de los max_tokens
+  max_tokens: 768           # cuando la charla anterior pasa de este tamaño, se resume
+  max_tokens_resumen: 512   # lugar reservado para el resumen dentro de los max_tokens (no limita su largo)
 
 busqueda:
   modelo_embeddings: intfloat/multilingual-e5-small              # búsqueda por significado

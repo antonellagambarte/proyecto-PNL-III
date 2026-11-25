@@ -1,8 +1,7 @@
 """La memoria de la conversación: lo que se habló antes en la misma sesión.
 
-Adaptado del manejo de memoria del código de la cátedra: la charla se guarda con el
-checkpointer de LangGraph y, cuando se alarga, lo más viejo se resume con SummarizationNode
-de langmem, con los mismos tamaños.
+La charla se guarda con el checkpointer de LangGraph y, cuando se alarga, se resume con
+SummarizationNode de langmem.
 """
 
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage
@@ -12,7 +11,7 @@ from src.agents.esquemas import Estado
 
 
 def crear_memoria(llm, config: dict) -> SummarizationNode:
-    """Nodo que prepara la charla anterior para los agentes: si pasa de max_tokens, resume lo más viejo."""
+    """Nodo que prepara la charla anterior para los agentes: si pasa de max_tokens, la resume."""
     memoria = config["memoria"]
     return SummarizationNode(
         model=llm,
@@ -33,7 +32,7 @@ def formatear_conversacion(mensajes: list[AnyMessage]) -> str:
     renglones = []
     for mensaje in mensajes:
         if isinstance(mensaje, SystemMessage):
-            renglones.append(mensaje.content)  # el resumen de lo más viejo
+            renglones.append(mensaje.content)  # el resumen de la charla hasta ese momento
         elif isinstance(mensaje, HumanMessage):
             renglones.append(f"Estudiante: {mensaje.content}")
         else:
