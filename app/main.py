@@ -1,9 +1,9 @@
+"""Punto de entrada de la API.
 
-from fastapi import FastAPI
+Uso, desde la raíz del proyecto:
+    uv run uvicorn app.main:app
+"""
 
-app = FastAPI()
+from src.interfaces.fastapi_app.api import app
 
-@app.get("/")
-def root():
-    return {"message": "Hello from FastAPI agent!"}
-
+__all__ = ["app"]
