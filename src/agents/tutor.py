@@ -74,7 +74,7 @@ class Tutor:
         nuevos = [f for m in de_esta_vuelta if isinstance(m, ToolMessage) and m.artifact for f in m.artifact]
         # Las consultas que escribió el tutor, para el registro.
         consultas = [
-            llamada["args"]["consulta"]
+            llamada["args"].get("consulta", "")
             for m in de_esta_vuelta if isinstance(m, AIMessage)
             for llamada in m.tool_calls if llamada["name"] == "buscar_en_manual"
         ]
