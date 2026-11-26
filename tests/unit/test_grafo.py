@@ -76,7 +76,7 @@ def test_registro():
     """El registro acumula, en orden, una entrada por agente y por vuelta."""
     estado = correr(TutorFalso(), VerificadorFalso("corregir", "aprobada"))
     pasos = [(r["agente"], r["vuelta"]) for r in estado["registro"]]
-    assert pasos == [("tutor", 1), ("verificador", 1), ("tutor", 2), ("verificador", 2)]
+    assert pasos == [("tutor", 1), ("verificador", 1), ("tutor", 2), ("verificador", 2), ("control_salida", 2)]
 
 
 def test_sin_vueltas():
@@ -98,6 +98,7 @@ def test_segunda_vuelta():
     assert mensajes[:2] == anteriores
     assert "Motivo: falta la mínima" in mensajes[2].content
     assert "Buscá con esta consulta: velocidad mínima en avenidas" in mensajes[2].content
+    assert "sin mencionar esta revisión" in mensajes[2].content
 
 
 def test_charla_en_el_mensaje():
@@ -130,7 +131,7 @@ def test_memoria():
     assert tutor.charlas[0] == []
     assert [m.content for m in tutor.charlas[1]] == ["¿Velocidad máxima en avenidas?", "60 km/h"]
     assert tutor.charlas[2] == []
-    assert len(estado["registro"]) == 2  # el registro empieza de cero en cada pregunta
+    assert len(estado["registro"]) == 3  # el registro empieza de cero en cada pregunta
 
 
 def test_resumen():

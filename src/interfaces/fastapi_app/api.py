@@ -15,6 +15,7 @@ from src.common.config import cargar_config, resolver_ruta
 from src.common.logs import configurar_logging
 from src.graphs.workflows.tutor_verificador import TutorVerificador
 from src.interfaces.fastapi_app.esquemas import Consulta, Metricas, Respuesta
+from src.policies.salida import sin_enlaces
 
 log = logging.getLogger(__name__)
 
@@ -55,7 +56,8 @@ def consultar(consulta: Consulta, request: Request) -> Respuesta:
         citas=resultado["citas"],
         veredicto=resultado["veredicto"],
         vueltas=resultado["vueltas"],
-        pasos=resultado["registro"],
+        pasos=[{**paso, "respuesta": sin_enlaces(paso["respuesta"])} if "respuesta" in paso else paso
+               for paso in resultado["registro"]],
         sesion=sesion,
         metricas=Metricas(
             segundos=round(time.perf_counter() - inicio, 2),

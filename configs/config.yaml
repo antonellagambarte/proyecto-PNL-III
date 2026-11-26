@@ -15,13 +15,16 @@ memoria:
   max_tokens: 768           # cuando la charla anterior pasa de este tamaño, se resume
   max_tokens_resumen: 512   # lugar reservado para el resumen dentro de los max_tokens (no limita su largo)
 
+entrada:
+  max_caracteres: 1000      # Largo máximo de la pregunta: si lo pasa, se rechaza sin llamar al LLM.
+
 pantalla:
   url_api: http://127.0.0.1:8000   # dónde escucha la API: esta misma máquina y el puerto que usa uvicorn por defecto
 
 busqueda:
   modelo_embeddings: intfloat/multilingual-e5-small              # búsqueda por significado
   modelo_reranking: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1   # reordena los candidatos
-  max_por_seccion: 2        # chunks de una misma sección en los resultados, después del re-ranking
+  max_por_seccion: 3        # chunks de una misma sección en los resultados, después del re-ranking (con 2, Recall@5 0,950; con 3, 0,975)
   k_candidatos: 30          # candidatos de la búsqueda híbrida, antes del re-ranking
   k_fragmentos: 5           # fragmentos que recibe el tutor, después del re-ranking
 
