@@ -11,6 +11,12 @@ from src.common.config import cargar_config
 
 URL_API = cargar_config()["pantalla"]["url_api"]
 VEREDICTOS = {"aprobada": "aprobó la respuesta", "corregir": "pidió corregirla", "buscar_mas": "pidió buscar más"}
+CAMBIOS_SALIDA = {
+    "enlaces_quitados": "sacó los enlaces",
+    "opcion_inexistente": "descartó una opción que no estaba entre las dadas",
+    "citas_inventadas": "la respuesta citaba fragmentos que no se encontraron, así que se reemplazó por el aviso",
+    "sin_citas": "la respuesta no tenía citas al manual, así que se reemplazó por el aviso",
+}
 
 
 def preguntar(pregunta: str, sesion: str | None) -> dict:
@@ -29,8 +35,13 @@ def mostrar_pasos(datos: dict) -> None:
     """El desplegable con lo que hizo cada agente en cada vuelta."""
     with st.expander("Cómo se llegó a la respuesta"):
         for paso in datos["pasos"]:
-            if paso["agente"] == "control_entrada":
+            if paso["agente"] == "control_entrada" and "motivo" in paso:
                 st.markdown(f"**Control de entrada**: no dejó pasar la pregunta. {paso['motivo']}")
+            elif paso["agente"] == "control_entrada":
+                st.markdown(f"**Control de entrada**: sacó {paso['invisibles']} caracteres invisibles de la pregunta.")
+            elif paso["agente"] == "control_salida":
+                if paso["cambios"]:
+                    st.markdown("**Control de salida**: " + "; ".join(CAMBIOS_SALIDA[c] for c in paso["cambios"]) + ".")
             elif paso["agente"] == "tutor":
                 st.markdown(f"**Tutor, vuelta {paso['vuelta']}**")
                 for consulta in paso["consultas"]:

@@ -33,6 +33,7 @@ def mensajes_para_tutor(estado: Estado) -> list[AnyMessage]:
     observacion = f"Tu respuesta no se aprobó. Motivo: {veredicto.motivo}"
     if veredicto.consulta_sugerida:
         observacion += f"\n\nBuscá con esta consulta: {veredicto.consulta_sugerida}"
+    observacion += "\n\nEscribí de nuevo la respuesta completa, para quien estudia, sin mencionar esta revisión."
     return estado["mensajes_tutor"] + [HumanMessage(observacion)]
 
 

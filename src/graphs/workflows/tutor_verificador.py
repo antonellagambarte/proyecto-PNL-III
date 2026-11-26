@@ -19,6 +19,7 @@ from src.agents.verificador import Verificador
 from src.common.config import resolver_ruta
 from src.common.telemetry.auditoria import Auditoria
 from src.policies.entrada import revisar_entrada
+from src.policies.salida import PARA_MIRAR, controlar_salida
 from src.rag.retrievers.hibrida import crear_buscador
 from src.runtime.providers.llm import crear_llm
 from src.tools.builtin.buscar_en_manual import crear_buscar_en_manual
@@ -29,6 +30,14 @@ SIN_RESPALDO = "No encontré respaldo suficiente en el manual para responder est
 def sin_respaldo(estado: Estado) -> dict:
     """Nodo final cuando se acabaron las vueltas sin aprobación: reemplaza el borrador por el aviso."""
     return {"borrador": RespuestaTutor(respuesta=SIN_RESPALDO, opcion_elegida=None, citas=[])}
+
+
+def control_salida(estado: Estado) -> dict:
+    """Nodo después de la aprobación: aplica el control de salida antes de mostrar y guardar la respuesta."""
+    encontrados = {fragmento.id for fragmento in estado["fragmentos"]}
+    borrador, cambios = controlar_salida(estado["borrador"], estado["opciones"], encontrados)
+    return {"borrador": borrador,
+            "registro": estado["registro"] + [{"agente": "control_salida", "vuelta": estado["vueltas"], "cambios": cambios}]}
 
 
 def crear_grafo(tutor, verificador, memoria, max_vueltas: int):
@@ -48,12 +57,14 @@ def crear_grafo(tutor, verificador, memoria, max_vueltas: int):
     grafo.add_node("memoria", memoria)
     grafo.add_node("tutor", tutor)
     grafo.add_node("verificador", verificador)
+    grafo.add_node("control_salida", control_salida)
     grafo.add_node("sin_respaldo", sin_respaldo)
     grafo.add_node("recordar", recordar)
     grafo.add_edge(START, "memoria")
     grafo.add_edge("memoria", "tutor")
     grafo.add_edge("tutor", "verificador")
-    grafo.add_conditional_edges("verificador", rutear, {"fin": "recordar", "tutor": "tutor", "sin_respaldo": "sin_respaldo"})
+    grafo.add_conditional_edges("verificador", rutear, {"fin": "control_salida", "tutor": "tutor", "sin_respaldo": "sin_respaldo"})
+    grafo.add_edge("control_salida", "recordar")
     grafo.add_edge("sin_respaldo", "recordar")
     grafo.add_edge("recordar", END)
     return grafo.compile(checkpointer=InMemorySaver())
@@ -84,10 +95,10 @@ def entrada(pregunta: str, opciones: list[str] | None) -> dict:
             "veredicto": None, "vueltas": 0, "mensajes_tutor": [], "registro": []}
 
 
-def rechazada(motivo: str) -> dict:
+def rechazada(motivo: str, control: str) -> dict:
     """La respuesta cuando el control de entrada frena la pregunta: no se llama al LLM."""
     return {"respuesta": motivo, "opcion_elegida": None, "citas": [], "veredicto": "rechazada", "vueltas": 0,
-            "registro": [{"agente": "control_entrada", "motivo": motivo}], "tokens": {}}
+            "registro": [{"agente": "control_entrada", "control": control, "motivo": motivo}], "tokens": {}}
 
 
 def evento_de_paso(nodo: str, cambios: dict) -> dict | None:
@@ -102,6 +113,9 @@ def evento_de_paso(nodo: str, cambios: dict) -> dict | None:
                 "eligio_opcion": bool(paso.get("opcion_elegida"))}
     if nodo == "verificador":
         return {"evento": "verificador", "vuelta": cambios["registro"][-1]["vuelta"], "veredicto": cambios["veredicto"].veredicto}
+    if nodo == "control_salida":
+        lista = cambios["registro"][-1]["cambios"]
+        return {"evento": "salida", "gravedad": "warning" if set(lista) & set(PARA_MIRAR) else "info", "cambios": lista}
     if nodo == "sin_respaldo":
         return {"evento": "sin_respaldo"}
     return None
@@ -143,7 +157,7 @@ class TutorVerificador:
         if revision.motivo:
             auditoria.registrar("fin", resultado="rechazada", segundos_total=auditoria.total(),
                                 tokens_entrada=0, tokens_salida=0)
-            return rechazada(revision.motivo)
+            return rechazada(revision.motivo, revision.control)
         config = {"configurable": {"thread_id": sesion}}
         try:
             with get_usage_metadata_callback() as uso:
@@ -158,6 +172,9 @@ class TutorVerificador:
             raise
         respuesta = armar_respuesta(self.grafo.get_state(config).values)
         respuesta["tokens"] = uso.usage_metadata
+        if revision.invisibles:
+            # Que también se vea en los pasos que el control de entrada sacó algo escondido.
+            respuesta["registro"] = [{"agente": "control_entrada", "invisibles": revision.invisibles}] + respuesta["registro"]
         auditoria.registrar(
             "fin", resultado="aprobada" if respuesta["veredicto"] == "aprobada" else "sin_respaldo",
             vueltas=respuesta["vueltas"], citas=len(respuesta["citas"]), segundos_total=auditoria.total(),

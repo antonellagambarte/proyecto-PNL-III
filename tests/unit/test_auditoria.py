@@ -24,10 +24,10 @@ def leer(carpeta):
 
 
 def test_un_evento_por_paso(tmp_path):
-    """Una pregunta con dos vueltas deja, en orden: entrada, tutor, verificador, tutor, verificador y fin."""
+    """Una pregunta con dos vueltas deja, en orden: entrada, tutor, verificador, tutor, verificador, salida y fin."""
     sistema_falso(tmp_path, "corregir", "aprobada").responder("¿Velocidad máxima en avenidas?")
     lineas = leer(tmp_path)
-    assert [l["evento"] for l in lineas] == ["entrada", "tutor", "verificador", "tutor", "verificador", "fin"]
+    assert [l["evento"] for l in lineas] == ["entrada", "tutor", "verificador", "tutor", "verificador", "salida", "fin"]
     assert [l["veredicto"] for l in lineas if l["evento"] == "verificador"] == ["corregir", "aprobada"]
     assert lineas[-1]["resultado"] == "aprobada"
     assert len({l["id_pregunta"] for l in lineas}) == 1
