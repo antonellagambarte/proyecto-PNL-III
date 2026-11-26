@@ -27,7 +27,7 @@ class Respuesta(BaseModel):
     respuesta: str
     opcion_elegida: str | None
     citas: list[str]
-    veredicto: str = Field(description="El último veredicto del verificador: aprobada, corregir o buscar_mas.")
+    veredicto: str = Field(description="El último veredicto del verificador (aprobada, corregir o buscar_mas), o rechazada si la frenó el control de entrada.")
     vueltas: int
     pasos: list[dict] = Field(description="Qué buscó y respondió el tutor y qué dijo el verificador, en orden.")
     sesion: str

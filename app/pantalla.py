@@ -29,7 +29,9 @@ def mostrar_pasos(datos: dict) -> None:
     """El desplegable con lo que hizo cada agente en cada vuelta."""
     with st.expander("Cómo se llegó a la respuesta"):
         for paso in datos["pasos"]:
-            if paso["agente"] == "tutor":
+            if paso["agente"] == "control_entrada":
+                st.markdown(f"**Control de entrada**: no dejó pasar la pregunta. {paso['motivo']}")
+            elif paso["agente"] == "tutor":
                 st.markdown(f"**Tutor, vuelta {paso['vuelta']}**")
                 for consulta in paso["consultas"]:
                     st.markdown(f"- Buscó en el manual: «{consulta}»")

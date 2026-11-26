@@ -16,6 +16,9 @@ from src.agents.esquemas import Estado, RespuestaTutor
 from src.agents.memoria import crear_memoria, recordar
 from src.agents.tutor import Tutor
 from src.agents.verificador import Verificador
+from src.common.config import resolver_ruta
+from src.common.telemetry.auditoria import Auditoria
+from src.policies.entrada import revisar_entrada
 from src.rag.retrievers.hibrida import crear_buscador
 from src.runtime.providers.llm import crear_llm
 from src.tools.builtin.buscar_en_manual import crear_buscar_en_manual
@@ -81,10 +84,35 @@ def entrada(pregunta: str, opciones: list[str] | None) -> dict:
             "veredicto": None, "vueltas": 0, "mensajes_tutor": [], "registro": []}
 
 
+def rechazada(motivo: str) -> dict:
+    """La respuesta cuando el control de entrada frena la pregunta: no se llama al LLM."""
+    return {"respuesta": motivo, "opcion_elegida": None, "citas": [], "veredicto": "rechazada", "vueltas": 0,
+            "registro": [{"agente": "control_entrada", "motivo": motivo}], "tokens": {}}
+
+
+def evento_de_paso(nodo: str, cambios: dict) -> dict | None:
+    """Lo que se anota en la auditoría cuando termina un paso del grafo: cantidades y decisiones, sin textos.
+
+    memoria y recordar no se anotan: preparan y guardan la charla, no deciden nada.
+    """
+    if nodo == "tutor":
+        paso = cambios["registro"][-1]
+        return {"evento": "tutor", "vuelta": cambios["vueltas"], "busquedas": len(paso.get("consultas", [])),
+                "fragmentos": len(paso.get("fragmentos", [])), "citas": len(paso.get("citas", [])),
+                "eligio_opcion": bool(paso.get("opcion_elegida"))}
+    if nodo == "verificador":
+        return {"evento": "verificador", "vuelta": cambios["registro"][-1]["vuelta"], "veredicto": cambios["veredicto"].veredicto}
+    if nodo == "sin_respaldo":
+        return {"evento": "sin_respaldo"}
+    return None
+
+
 class TutorVerificador:
     """El sistema completo: carga una vez los modelos y la búsqueda, y responde preguntas."""
 
     def __init__(self, config: dict):
+        self.max_caracteres = config["entrada"]["max_caracteres"]
+        self.auditoria = Auditoria(resolver_ruta(config["rutas"]["logs"]))
         llm = crear_llm(config)
         herramienta = crear_buscar_en_manual(crear_buscador(config), config["busqueda"]["k_fragmentos"])
         agentes = config["agentes"]
@@ -99,11 +127,41 @@ class TutorVerificador:
         """Responde una pregunta, con o sin opciones. Suma los tokens que usaron todas las llamadas al LLM.
 
         Con el mismo id de sesión, el sistema recuerda la charla anterior. Sin id, cada pregunta
-        es independiente (así se evalúa).
+        es independiente (así se evalúa). Antes pasa por el control de entrada: una pregunta
+        rechazada no llega a los agentes ni queda en la charla.
+
+        Cada paso queda en la auditoría en el momento en que termina: por eso el grafo se recorre
+        con stream, que avisa al final de cada nodo, en lugar de invoke.
         """
-        config = {"configurable": {"thread_id": sesion or str(uuid4())}}
-        with get_usage_metadata_callback() as uso:
-            final = self.grafo.invoke(entrada(pregunta, opciones), config)
-        respuesta = armar_respuesta(final)
+        sesion = sesion or str(uuid4())
+        auditoria = self.auditoria.empezar(uuid4().hex[:12], sesion)
+        revision = revisar_entrada(pregunta, opciones, self.max_caracteres)
+        # Un ataque frenado o algo escondido que se sacó es para mirar: warning.
+        auditoria.registrar("entrada", "warning" if revision.motivo or revision.invisibles else "info",
+                            resultado="rechazada" if revision.motivo else "aceptada",
+                            control=revision.control, invisibles_quitados=revision.invisibles)
+        if revision.motivo:
+            auditoria.registrar("fin", resultado="rechazada", segundos_total=auditoria.total(),
+                                tokens_entrada=0, tokens_salida=0)
+            return rechazada(revision.motivo)
+        config = {"configurable": {"thread_id": sesion}}
+        try:
+            with get_usage_metadata_callback() as uso:
+                for paso in self.grafo.stream(entrada(revision.pregunta, revision.opciones), config, stream_mode="updates"):
+                    for nodo, cambios in paso.items():
+                        evento = evento_de_paso(nodo, cambios)
+                        if evento:
+                            auditoria.registrar(**evento)
+        except Exception as error:
+            # Solo el tipo de error: el mensaje puede traer datos internos.
+            auditoria.registrar("error", "error", tipo=type(error).__name__, segundos_total=auditoria.total())
+            raise
+        respuesta = armar_respuesta(self.grafo.get_state(config).values)
         respuesta["tokens"] = uso.usage_metadata
+        auditoria.registrar(
+            "fin", resultado="aprobada" if respuesta["veredicto"] == "aprobada" else "sin_respaldo",
+            vueltas=respuesta["vueltas"], citas=len(respuesta["citas"]), segundos_total=auditoria.total(),
+            tokens_entrada=sum(u["input_tokens"] for u in uso.usage_metadata.values()),
+            tokens_salida=sum(u["output_tokens"] for u in uso.usage_metadata.values()),
+        )
         return respuesta

@@ -15,6 +15,9 @@ memoria:
   max_tokens: 768           # cuando la charla anterior pasa de este tamaño, se resume
   max_tokens_resumen: 512   # lugar reservado para el resumen dentro de los max_tokens (no limita su largo)
 
+entrada:
+  max_caracteres: 1000      # Largo máximo de la pregunta: si lo pasa, se rechaza sin llamar al LLM.
+
 pantalla:
   url_api: http://127.0.0.1:8000   # dónde escucha la API: esta misma máquina y el puerto que usa uvicorn por defecto
 
