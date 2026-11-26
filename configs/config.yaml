@@ -6,6 +6,10 @@ llm:
   modelo: gpt-6-luna
   timeout_segundos: 60
   reintentos: 2             # si OpenAI falla o no responde a tiempo, se reintenta antes de dar error
+  # Precios de gpt-6-luna en dólares por millón de tokens, de la página de precios de OpenAI (13/11/2026).
+  # Solo se usan para calcular el costo en las mediciones.
+  precio_entrada: 0.10
+  precio_salida: 0.50
 
 agentes:
   max_vueltas: 2            # vueltas máximas entre tutor y verificador
