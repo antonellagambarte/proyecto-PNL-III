@@ -81,3 +81,36 @@ def tiempos(por_pregunta: pd.DataFrame) -> pd.DataFrame:
     resumen = una_por_busqueda.groupby("variante", sort=False)["segundos"].quantile([0.5, 0.95]).unstack()
     resumen.columns = ["p50", "p95"]
     return resumen.reset_index()
+
+
+def probar_tamanos(buscador, preguntas: list[dict], candidatos: list[int], fragmentos: list[int]) -> pd.DataFrame:
+    """Acierto y tiempo de la búsqueda completa con distintos tamaños, para elegir los de config.yaml.
+
+    candidatos son los que ordena el re-ranker (k_candidatos) y fragmentos los que recibe el
+    tutor en cada búsqueda (k_fragmentos). Para cada cantidad de candidatos se busca una vez
+    cada pregunta y se mide el acierto con cada cantidad de fragmentos: los primeros k de la
+    lista son los mismos que daría buscar con k. Al terminar, el buscador vuelve a su valor.
+    """
+    if min(candidatos) < max(fragmentos):
+        raise ValueError("Cada cantidad de candidatos tiene que alcanzar para la mayor cantidad de fragmentos.")
+    original = buscador.k_candidatos
+    filas = []
+    try:
+        for cantidad in candidatos:
+            buscador.k_candidatos = cantidad
+            for pregunta in preguntas:
+                relevantes = set(pregunta["paginas"])
+                inicio = time.perf_counter()
+                metadatos = [r["metadata"] for r in buscador.buscar(pregunta["pregunta"], max(fragmentos))]
+                segundos = time.perf_counter() - inicio
+                for k in fragmentos:
+                    paginas = a_paginas(metadatos[:k], relevantes)
+                    filas.append({"candidatos": cantidad, "fragmentos": k,
+                                  "recall": recall_at_k(paginas, relevantes, k), "segundos": segundos})
+    finally:
+        buscador.k_candidatos = original
+    return (pd.DataFrame(filas).groupby(["candidatos", "fragmentos"])
+            .agg(recall=("recall", "mean"),
+                 segundos_p50=("segundos", lambda s: s.quantile(0.5)),
+                 segundos_p95=("segundos", lambda s: s.quantile(0.95)))
+            .reset_index())
