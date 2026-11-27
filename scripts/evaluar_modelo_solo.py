@@ -1,11 +1,11 @@
-"""La variante «modelo solo»: le hace las preguntas con opciones al LLM, sin darle el manual.
+"""La variante «modelo solo»: le hace las preguntas al LLM, sin darle el manual.
 
 Uso, desde la raíz del proyecto:
     uv run python -m scripts.evaluar_modelo_solo [practica|test]
 
-Usa el LLM: cuesta menos de un centavo. Guarda en reports/modelo_solo_<conjunto>.csv qué
-eligió el modelo en cada pregunta y si acertó. scripts.evaluar_sistema lo suma a su tabla de
-variantes, así que conviene correr este primero.
+Usa el LLM: cuesta menos de un centavo. Guarda en reports/modelo_solo_<conjunto>.csv qué eligió
+o respondió el modelo en cada pregunta y si acertó (la opción correcta, o el dato clave en las
+libres). scripts.evaluar_sistema lo suma a su tabla de variantes, así que conviene correr este primero.
 """
 
 import logging
@@ -42,8 +42,9 @@ def main() -> None:
     reportes.mkdir(parents=True, exist_ok=True)
     tabla = pd.DataFrame(filas)
     tabla.to_csv(reportes / f"modelo_solo_{conjunto}.csv", index=False)
-    print(tabla.to_string(index=False))
-    print(f"\nAciertos sin el manual: {int(tabla['acierta'].sum())} de {len(tabla)}"
+    print(tabla.drop(columns="respuesta").to_string(index=False))
+    medibles = tabla["acierta"].dropna().astype(bool)
+    print(f"\nAciertos sin el manual: {int(medibles.sum())} de {len(medibles)}"
           f" | US$ {costo(usados['tokens_entrada'], usados['tokens_salida'], config['llm']):.4f}")
     log.info("Listo: %s", reportes / f"modelo_solo_{conjunto}.csv")
 

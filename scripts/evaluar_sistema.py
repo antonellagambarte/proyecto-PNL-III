@@ -58,7 +58,7 @@ def main() -> None:
     solo = reportes / f"modelo_solo_{conjunto}.csv"
     modelo_solo = None
     if solo.exists():
-        aciertos = pd.read_csv(solo)["acierta"]
+        aciertos = pd.read_csv(solo)["acierta"].dropna().astype(bool)
         modelo_solo = f"{int(aciertos.sum())} de {len(aciertos)}"
     (reportes / f"evaluacion_{nombre}.md").write_text(markdown_corrida(nombre, tabla, modelo_solo), encoding="utf-8")
 

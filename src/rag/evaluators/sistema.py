@@ -1,8 +1,9 @@
 """Evaluación del sistema completo, pregunta por pregunta.
 
-Cada respuesta se mide con reglas, sin otro LLM: si eligió la opción correcta (la del sistema
-y la del borrador del tutor en la primera vuelta, que es lo que respondería el tutor solo,
-sin el verificador), si citó alguna de las páginas esperadas, qué hizo la segunda vuelta,
+Cada respuesta se mide con reglas, sin otro LLM: si respondió bien (en las de opciones, si eligió
+la correcta, y en las libres, si trae el dato clave), tanto la respuesta final como el borrador del
+tutor en la primera vuelta (lo que respondería el tutor solo, sin el verificador), si citó alguna
+de las páginas esperadas, qué hizo la segunda vuelta,
 cuánto tardó, cuántos tokens usó y cuánto costó. Después, el resumen de la corrida y los
 reportes para leer.
 """
@@ -11,6 +12,7 @@ import json
 import logging
 import re
 import time
+import unicodedata
 from uuid import uuid4
 
 import pandas as pd
@@ -27,11 +29,28 @@ CONJUNTOS = {"practica": "preguntas_eval.jsonl", "test": "preguntas_test.jsonl"}
 PAGINAS = re.compile(r"p\. (\d+)(?:–(\d+))?")
 
 
-def acierta(pregunta: dict, opcion: str | None) -> bool | None:
-    """Si la opción es la correcta. En las preguntas sin opciones no se sabe sin leer la respuesta: None."""
-    if not pregunta["opciones"]:
-        return None
-    return bool(opcion) and igual(opcion, pregunta["correcta"])
+def normalizar(texto: str) -> str:
+    """Sin mayúsculas ni tildes, para buscar el dato clave sin que falle por eso."""
+    sin_tildes = unicodedata.normalize("NFKD", texto.lower())
+    return "".join(c for c in sin_tildes if not unicodedata.combining(c))
+
+
+def trae_clave(clave: list[list[str]], texto: str) -> bool:
+    """Si el texto trae todos los datos clave. De cada dato alcanza con una de sus variantes."""
+    texto = normalizar(texto)
+    return all(any(normalizar(variante) in texto for variante in dato) for dato in clave)
+
+
+def acierta(pregunta: dict, opcion: str | None, texto: str = "") -> bool | None:
+    """Si respondió bien: la opción correcta en las de opciones, o el dato clave en las libres.
+
+    None si es libre y no tiene dato clave: no se puede saber sin leerla.
+    """
+    if pregunta["opciones"]:
+        return bool(opcion) and igual(opcion, pregunta["correcta"])
+    if pregunta.get("clave"):
+        return trae_clave(pregunta["clave"], texto or "")
+    return None
 
 
 def paginas_citadas(citas: list[str]) -> set[int]:
@@ -50,21 +69,23 @@ def cita_pagina(pregunta: dict, citas: list[str]) -> bool | None:
     return bool(paginas_citadas(citas) & set(pregunta["paginas"]))
 
 
-def borrador_del_tutor(registro: list[dict]) -> str | None:
-    """La opción que eligió el tutor en la primera vuelta, antes de que el verificador la revise."""
-    primero = next((paso for paso in registro if paso.get("agente") == "tutor"), None)
-    return primero.get("opcion_elegida") if primero else None
+def borrador_del_tutor(registro: list[dict]) -> tuple[str | None, str]:
+    """La opción y el texto del tutor en la primera vuelta, antes de que el verificador los revise."""
+    primero = next((paso for paso in registro if paso.get("agente") == "tutor"), {})
+    return primero.get("opcion_elegida"), primero.get("respuesta", "")
 
 
 def segunda_vuelta(pregunta: dict, respuesta: dict) -> str | None:
-    """Qué hizo la segunda vuelta con la opción: arregló, arruinó o la dejó igual.
+    """Qué hizo la segunda vuelta con la respuesta: la arregló, la arruinó o la dejó igual.
 
-    None si hubo una sola vuelta o si la pregunta no tiene opciones.
+    None si hubo una sola vuelta o si no se puede saber si acertó (libre sin dato clave).
     """
-    if respuesta["vueltas"] < 2 or not pregunta["opciones"]:
+    if respuesta["vueltas"] < 2:
         return None
-    antes = acierta(pregunta, borrador_del_tutor(respuesta["registro"]))
-    despues = acierta(pregunta, respuesta["opcion_elegida"])
+    antes = acierta(pregunta, *borrador_del_tutor(respuesta["registro"]))
+    despues = acierta(pregunta, respuesta["opcion_elegida"], respuesta["respuesta"])
+    if antes is None or despues is None:
+        return None
     if antes == despues:
         return "igual"
     return "arreglo" if despues else "arruino"
@@ -77,8 +98,8 @@ def evaluar(pregunta: dict, respuesta: dict) -> dict:
         "forma": "opciones" if pregunta["opciones"] else "libre",
         "veredicto": respuesta["veredicto"],
         "vueltas": respuesta["vueltas"],
-        "acierta": acierta(pregunta, respuesta["opcion_elegida"]),
-        "acierta_tutor_solo": acierta(pregunta, borrador_del_tutor(respuesta["registro"])),
+        "acierta": acierta(pregunta, respuesta["opcion_elegida"], respuesta["respuesta"]),
+        "acierta_tutor_solo": acierta(pregunta, *borrador_del_tutor(respuesta["registro"])),
         "cita_pagina": cita_pagina(pregunta, respuesta["citas"]),
         "segunda_vuelta": segunda_vuelta(pregunta, respuesta),
     }
@@ -121,10 +142,17 @@ def medir(sistema, preguntas: list[dict], config: dict, conjunto: str) -> tuple[
 
 
 def similitud(modelo, respuestas: list[str], esperadas: list[str]) -> list[float]:
-    """Parecido de significado entre cada respuesta y la esperada, de 0 a 1, con el modelo de embeddings."""
-    # El modelo e5 espera el prefijo «query: » cuando se comparan dos textos del mismo tipo.
-    vectores = lambda textos: modelo.encode([f"query: {t}" for t in textos], normalize_embeddings=True)
-    return [round(float(a @ b), 3) for a, b in zip(vectores(respuestas), vectores(esperadas))]
+    """Parecido de significado entre cada respuesta y la esperada: la similitud coseno entre sus embeddings.
+
+    Es el cálculo de la métrica Semantic Similarity de RAGAS. El coseno va de -1 a 1, pero con este
+    modelo los valores quedan entre 0,7 y 1, como explica su página: lo que importa es comparar
+    entre respuestas, no el número suelto.
+    """
+    from sentence_transformers import util
+
+    # El modelo e5 pide el prefijo «query: » cuando se comparan dos textos del mismo tipo.
+    vectores = lambda textos: modelo.encode([f"query: {t}" for t in textos], convert_to_tensor=True)
+    return [round(float(valor), 3) for valor in util.pairwise_cos_sim(vectores(respuestas), vectores(esperadas))]
 
 
 def de(columna: pd.Series) -> str:
@@ -144,6 +172,8 @@ def resumir(nombre: str, tabla: pd.DataFrame) -> dict:
         "fragmentos": int(tabla["k_fragmentos"].iloc[0]),
         "preguntas": len(tabla),
         "aciertos": de(tabla["acierta"]),
+        "aciertos_opciones": de(tabla.loc[tabla["forma"] == "opciones", "acierta"]),
+        "aciertos_libres": de(tabla.loc[tabla["forma"] == "libre", "acierta"]),
         "aciertos_tutor_solo": de(tabla["acierta_tutor_solo"]),
         "cita_pagina": de(tabla["cita_pagina"]),
         "sin_respaldo": int((tabla["veredicto"] != "aprobada").sum()),
@@ -163,7 +193,8 @@ def resumir(nombre: str, tabla: pd.DataFrame) -> dict:
 
 NOMBRES = {
     "corrida": "Corrida", "conjunto": "Preguntas de", "candidatos": "Candidatos", "fragmentos": "Fragmentos", "preguntas": "Preguntas",
-    "aciertos": "Aciertos con opciones", "aciertos_tutor_solo": "Aciertos del tutor solo",
+    "aciertos": "Aciertos", "aciertos_opciones": "Aciertos con opciones", "aciertos_libres": "Aciertos libres (dato clave)",
+    "aciertos_tutor_solo": "Aciertos del tutor solo",
     "cita_pagina": "Cita la página esperada", "sin_respaldo": "Sin respaldo", "dos_vueltas": "Con 2 vueltas",
     "arreglo_arruino": "La 2.ª vuelta arregló / arruinó", "parecido_p50": "Parecido p50",
     "segundos_p50": "Segundos p50", "segundos_p95": "Segundos p95",
@@ -174,8 +205,9 @@ NOMBRES = {
 
 EXPLICACION = [
     "- **p50** es la mediana: la mitad de las preguntas tarda (o gasta) eso o menos. **p95**: solo 5 de cada 100 tardan más.",
-    "- **Tutor solo** es la opción del borrador del tutor en la primera vuelta, antes de que lo revise el verificador.",
-    "- **Parecido** es la similitud de significado entre la respuesta y la esperada (de 0 a 1), con el modelo de embeddings de la búsqueda.",
+    "- **Acierto:** en las de opciones, elegir la correcta. En las libres, que la respuesta traiga el dato clave (`clave` en el archivo de preguntas).",
+    "- **Tutor solo** es el borrador del tutor en la primera vuelta, antes de que lo revise el verificador.",
+    "- **Parecido** es la similitud de significado (coseno entre embeddings, como Semantic Similarity de RAGAS) entre la respuesta y la esperada, con el modelo de la búsqueda. Con este modelo los valores quedan entre 0,7 y 1: sirve para comparar, no como porcentaje de acierto.",
     "- El costo usa los precios de `configs/config.yaml` y no descuenta la caché de OpenAI: es un techo.",
 ]
 
@@ -215,7 +247,7 @@ def markdown_corrida(nombre: str, tabla: pd.DataFrame, modelo_solo: str | None) 
         *tabla_md([{"medida": NOMBRES[c], "valor": v} for c, v in resumen.items() if c != "corrida"],
                   {"medida": "Medida", "valor": "Valor"}),
         "",
-        "## Tres variantes, en las preguntas con opciones",
+        "## Tres variantes",
         "",
         *tabla_md(variantes, {"variante": "Variante", "aciertos": "Aciertos"}),
         "",

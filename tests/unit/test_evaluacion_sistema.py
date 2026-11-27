@@ -6,7 +6,7 @@ from src.rag.evaluators.costo import costo, segundos_por_agente, tokens
 from src.rag.evaluators.juez import markdown_juez
 from src.rag.evaluators.modelo_solo import Eleccion, responder_sin_manual
 from src.rag.evaluators.sistema import (acierta, cita_pagina, markdown_corrida, markdown_corridas, medir,
-                                        resumir, segunda_vuelta)
+                                        resumir, segunda_vuelta, similitud)
 from tests.unit.test_auditoria import sistema_falso
 
 PRECIOS = {"precio_entrada": 0.10, "precio_salida": 0.50}
@@ -41,11 +41,20 @@ def test_segundos_por_agente():
 
 
 def test_acierta():
-    """Compara la opción sin mayúsculas ni punto final. Sin opción elegida, falla. Sin opciones, no se sabe."""
+    """Compara la opción sin mayúsculas ni punto final. Sin opción elegida, falla. Si es libre y no tiene dato clave, no se sabe."""
     assert acierta(CON_OPCIONES, "90 días corridos desde su vencimiento")
     assert not acierta(CON_OPCIONES, "30 días.")
     assert not acierta(CON_OPCIONES, None)
-    assert acierta(LIBRE, "lo que sea") is None
+    assert acierta(LIBRE, None, "60 km/h") is None
+
+
+def test_dato_clave():
+    """En las libres acierta si trae todos los datos, con cualquiera de sus variantes, sin importar mayúsculas ni tildes."""
+    pregunta = {**LIBRE, "clave": [["60 km"], ["avenida", "avda"]]}
+    assert acierta(pregunta, None, "En las AVENIDAS la máxima es 60 km/h (p. 57).")
+    assert not acierta(pregunta, None, "La máxima es 60 km/h.")  # le falta un dato
+    assert not acierta(pregunta, None, "En las avenidas, 80 km/h.")
+    assert acierta({**LIBRE, "clave": [["no encontré"]]}, None, "No encontre en el manual informacion.")
 
 
 def test_cita_pagina():
@@ -57,15 +66,17 @@ def test_cita_pagina():
 
 
 def test_segunda_vuelta():
-    """Compara la opción del tutor en la primera vuelta con la final: arregló, arruinó o igual."""
-    def respuesta(primera, final, vueltas=2):
-        return {"vueltas": vueltas, "opcion_elegida": final,
-                "registro": [{"agente": "tutor", "vuelta": 1, "opcion_elegida": primera}]}
+    """Compara el borrador del tutor en la primera vuelta con la respuesta final: arregló, arruinó o igual."""
+    def respuesta(primera, final, vueltas=2, texto_primero="", texto_final=""):
+        return {"vueltas": vueltas, "opcion_elegida": final, "respuesta": texto_final,
+                "registro": [{"agente": "tutor", "vuelta": 1, "opcion_elegida": primera, "respuesta": texto_primero}]}
     bien, mal = CON_OPCIONES["correcta"], "30 días."
     assert segunda_vuelta(CON_OPCIONES, respuesta(mal, bien)) == "arreglo"
     assert segunda_vuelta(CON_OPCIONES, respuesta(bien, mal)) == "arruino"
     assert segunda_vuelta(CON_OPCIONES, respuesta(bien, bien)) == "igual"
     assert segunda_vuelta(CON_OPCIONES, respuesta(bien, bien, vueltas=1)) is None
+    libre = {**LIBRE, "clave": [["60 km"]]}
+    assert segunda_vuelta(libre, respuesta(None, None, texto_primero="80 km/h", texto_final="60 km/h")) == "arreglo"
 
 
 def test_medir(tmp_path):
@@ -105,20 +116,30 @@ def test_reportes():
 
 
 def test_modelo_solo():
-    """Solo se preguntan las de opciones. Si una llamada falla, cuenta como error y no como acierto."""
-    class LLMFalso:
-        def with_structured_output(self, esquema):
-            return self
+    """Las de opciones se miden por la opción y las libres por el dato clave. Si una llamada falla, cuenta como error y no como acierto."""
+    class Respuesta:
+        text = "En avenidas se puede ir a 80 km/h."
 
+    class Estructurado:
         def batch(self, mensajes, config=None, return_exceptions=False):
             self.mensajes = mensajes
             return [Eleccion(opcion="90 días corridos desde su vencimiento."), TimeoutError()]
 
+    class LLMFalso:
+        estructurado = Estructurado()
+
+        def with_structured_output(self, esquema):
+            return self.estructurado
+
+        def batch(self, mensajes, config=None, return_exceptions=False):
+            return [Respuesta()]
+
     llm = LLMFalso()
-    filas = responder_sin_manual(llm, [CON_OPCIONES, LIBRE, {**CON_OPCIONES, "id": "eval-03"}])
+    libre = {**LIBRE, "clave": [["60 km"]]}
+    filas = responder_sin_manual(llm, [CON_OPCIONES, libre, {**CON_OPCIONES, "id": "eval-03"}])
     assert [(f["id"], f["acierta"], f["error"]) for f in filas] == [
-        ("eval-02", True, None), ("eval-03", False, "TimeoutError")]
-    assert "Opciones:\n- 30 días." in llm.mensajes[0][1].content
+        ("eval-02", True, None), ("eval-37", False, None), ("eval-03", False, "TimeoutError")]
+    assert "Opciones:\n- 30 días." in llm.estructurado.mensajes[0][1].content
 
 
 def test_juez():
@@ -130,3 +151,17 @@ def test_juez():
     texto = markdown_juez("antes", tabla)
     assert "Mediana 1.00, promedio 1.00, con 1: 2 de 2." in texto
     assert "| eval-01 | 0.50 | inventa un dato |" in texto
+
+
+def test_similitud():
+    """Coseno entre embeddings: 1 si apuntan igual, 0 si no tienen nada en común, y el prefijo «query: » en los dos textos."""
+    import numpy as np
+
+    class ModeloFalso:
+        def encode(self, textos, convert_to_tensor=False):
+            self.textos = getattr(self, "textos", []) + textos
+            return np.array([[1.0, 0.0] if "60" in t else [0.0, 1.0] for t in textos])
+
+    modelo = ModeloFalso()
+    assert similitud(modelo, ["Son 60 km/h", "No sé"], ["60 km/h", "60 km/h"]) == [1.0, 0.0]
+    assert all(t.startswith("query: ") for t in modelo.textos)
