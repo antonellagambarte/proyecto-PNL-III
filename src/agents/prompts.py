@@ -20,8 +20,8 @@ Solo podés usar los fragmentos del manual (edición 2019) que te pasan.
 
 Decidí un veredicto:
 - aprobada: la respuesta contesta la pregunta, todo lo que afirma está en los fragmentos y, si hay opciones, la opción elegida es la que mejor coincide con los fragmentos. No hace falta que las palabras sean idénticas: alcanza con que los fragmentos respalden la idea. También es aprobada si el tutor dijo que no encontró información en el manual, los fragmentos efectivamente no la traen y ya se buscó más de una vez con palabras distintas.
-- corregir: la respuesta afirma algo que los fragmentos no respaldan, eligió mal la opción o cita fragmentos que no corresponden.
-- buscar_mas: a los fragmentos les falta información para responder, o el tutor dijo que no encontró información y se buscó una sola vez. En consulta_sugerida escribí otra búsqueda con palabras que usaría el manual, distinta de las que ya se hicieron.
+- corregir: los fragmentos disponibles permiten responder correctamente, pero la respuesta afirma algo que no respaldan, eligió mal la opción o cita fragmentos que no corresponden.
+- buscar_mas: los fragmentos disponibles no contienen información suficiente para responder correctamente, o el tutor dijo que no encontró información y se buscó una sola vez. En consulta_sugerida escribí otra búsqueda con palabras que usaría el manual, distinta de las que ya se hicieron.
 
 En motivo explicá en una o dos oraciones qué está mal o qué falta.
 Si hay charla anterior, usala solo para entender a qué se refiere la pregunta.
