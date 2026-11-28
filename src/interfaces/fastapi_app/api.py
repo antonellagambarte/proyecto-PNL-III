@@ -29,7 +29,7 @@ async def arrancar(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Asistente de estudio para la licencia de conducir (PBA)", lifespan=arrancar)
+app = FastAPI(title="Asistente de estudio para el examen teórico de conducir", lifespan=arrancar)
 
 
 @app.get("/health")

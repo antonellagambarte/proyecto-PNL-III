@@ -73,8 +73,8 @@ def empezar_charla() -> None:
     st.session_state.sesion = None
 
 
-st.set_page_config(page_title="Asistente de manejo PBA", page_icon="🚗")
-st.title("Asistente para el examen de conducir")
+st.set_page_config(page_title="Asistente de estudio para el examen teórico de conducir", page_icon="🚗")
+st.title("Asistente de estudio para el examen teórico de conducir")
 st.caption("Responde según el manual del conductor de la Provincia de Buenos Aires, edición 2019. Las normas pueden haber cambiado desde entonces.")
 
 # Streamlit vuelve a correr todo el archivo en cada interacción: la charla se guarda entre una y otra.

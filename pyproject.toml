@@ -1,7 +1,7 @@
 [project]
 name = "asistente-licencia-pba"
 version = "0.1.0"
-description = "Asistente de estudio para el examen teórico de la licencia de conducir (PBA) con RAG y dos agentes"
+description = "Asistente de estudio para el examen teórico de conducir de la Provincia de Buenos Aires, con RAG y dos agentes"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
