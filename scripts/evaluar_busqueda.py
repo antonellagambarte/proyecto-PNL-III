@@ -1,16 +1,11 @@
-"""Evaluación de la búsqueda: métricas de las cuatro variantes sobre las preguntas de evaluación.
+"""Evaluación de la búsqueda sola: las cuatro variantes con las preguntas de práctica o de test.
 
 Uso, desde la raíz del proyecto:
     uv run python -m scripts.evaluar_busqueda [practica|test]
 
-Adaptado del script de evaluación de la búsqueda del código de la cátedra. Usa las preguntas
-del conjunto elegido (práctica si no se dice nada) que tienen páginas relevantes (las que el
-manual no menciona no tienen contra qué medirse) y guarda las tablas en reports/. Las del
-test llevan «_test» al final del nombre.
-
-Con la práctica también prueba la búsqueda completa con las cantidades de candidatos y de
-fragmentos de la sección evaluacion de config.yaml, para elegir k_candidatos y k_fragmentos
-(reports/busqueda_tamanos.csv). Con el test no, porque con el test no se elige nada. No usa el LLM.
+Adaptado del script de la cátedra. Usa las preguntas con páginas esperadas, mide las páginas
+encontradas, el context recall y los tiempos, y guarda las tablas en reports/<conjunto>/. Con la práctica,
+además, prueba distintas cantidades de candidatos y fragmentos para elegir los de config.yaml.
 """
 
 import logging
@@ -19,7 +14,7 @@ import sys
 from src.common.config import cargar_config, resolver_ruta
 from src.common.jsonl import leer_jsonl
 from src.common.logs import configurar_logging
-from src.rag.evaluators.busqueda import evaluar, probar_tamanos, tiempos
+from src.rag.evaluators.busqueda import corpus, evaluar, probar_tamanos, revisar_evidencias, tiempos
 from src.rag.evaluators.sistema import CONJUNTOS
 from src.rag.retrievers.hibrida import crear_buscador
 
@@ -42,15 +37,21 @@ def main() -> None:
     por_pregunta, promedios = evaluar(buscador, preguntas, tuple(config["evaluacion"]["ks"]))
     segundos = tiempos(por_pregunta)
 
-    reportes = resolver_ruta(rutas["reportes"])
+    # Cada conjunto en su carpeta: reports/practica o reports/test.
+    reportes = resolver_ruta(rutas["reportes"]) / conjunto
     reportes.mkdir(parents=True, exist_ok=True)
-    final = "" if conjunto == "practica" else f"_{conjunto}"
-    por_pregunta.to_csv(reportes / f"busqueda_por_pregunta{final}.csv", index=False)
-    promedios.to_csv(reportes / f"busqueda_promedios{final}.csv", index=False)
-    segundos.to_csv(reportes / f"busqueda_tiempos{final}.csv", index=False)
+    evidencias = revisar_evidencias(preguntas, list(corpus(buscador).values()))
+    por_pregunta.to_csv(reportes / "busqueda_por_pregunta.csv", index=False)
+    promedios.to_csv(reportes / "busqueda_promedios.csv", index=False)
+    segundos.to_csv(reportes / "busqueda_tiempos.csv", index=False)
+    evidencias.to_csv(reportes / "busqueda_evidencias.csv", index=False)
 
     print(f"\n=== Promedios por variante y k ({len(preguntas)} preguntas de {conjunto}) ===")
     print(promedios.round(3).to_string(index=False))
+    afuera = evidencias[~evidencias["buscable"]]
+    print(f"\nContext recall: {len(evidencias) - len(afuera)} de {len(evidencias)} frases de evidencia se pueden medir.")
+    for fila in afuera.itertuples():
+        print(f"  Afuera, porque no está tal cual en ningún fragmento: {fila.id}, «{fila.evidencia[:70]}…»")
     print("\n=== Segundos por búsqueda ===")
     print(segundos.round(3).to_string(index=False))
     if conjunto == "practica":

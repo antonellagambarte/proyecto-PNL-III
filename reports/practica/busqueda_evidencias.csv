@@ -1,0 +1,42 @@
+id,evidencia,buscable
+eval-01,"p. 6: Autos, camionetas, casas rodantes, tractores, maquinarias y tren agrícola, 17 años: la licencia dura 1 año la primera vez y se renueva por 3 años. Trámites: original, duplicado, ampliación y renovación. Clases: B.1, G.1 y G.2.",True
+eval-02,p. 8: La licencia caduca a los noventa (90) días de producido el cambio no denunciado debiendo ser secuestrada por la autoridad de aplicación y remitida a la autoridad expedidora.,True
+eval-03,p. 8: La licencia caduca a los noventa (90) días de producido el cambio no denunciado debiendo ser secuestrada por la autoridad de aplicación y remitida a la autoridad expedidora.,True
+eval-04,"p. 12: Vencido dicho plazo, deberá tramitar la licencia, no como renovación, sino como original, rindiendo todos los exámenes que este implica.",True
+eval-04,p. 13: Debe efectuarse dentro de los 90 días de la fecha de vencimiento de la licencia.,True
+eval-05,"p. 16: PRINCIPIANTE Los conductores que obtengan su licencia por primera vez, deben conducir durante los primeros seis meses llevando bien visible, tanto adelante como detrás del vehículo que conduce el distintivo que identifique su condición de principiante (dos letreros con fondos verdes y letras blancas de 30 cm x 15 cm, que contengan la p…",True
+eval-06,"p. 23: El peatón debe circular por la acera, en lo posible por la derecha, no puede utilizar la calzada, excepto si necesita atravesarla, entonces lo hará por la senda peatonal (si no está demarcada, debe cruzar sólo en las esquinas), y al bajar del auto: debe rodearlo y dirigirse de inmediato a la acera.",True
+eval-07,"p. 34: Recomendaciones: no frenar sobre ellos, estar atento para hacerlo antes de ingresar, bajar la velocidad.",True
+eval-08,p. 35: Recomendaciones: se pierde el control por resultar resbaladizo: efecto «aquaplaning».,True
+eval-08,"p. 119: Si no los tiene, el neumático hace “aquaplaning”, derrapa sobre la calzada y pierde adherencia y por lo tanto no tiene dirección.",True
+eval-09,p. 35: Recomendaciones: hay una categoría de «señales transitorias»: prestar atención y obrar en consecuencia.,True
+eval-10,p. 47: Las de trazo intermitente blancas tienen carácter permisivo para cambiar de carril.,True
+eval-11,"p. 47: Las continuas blancas o amarillas son de carácter restrictivo, no pueden ser cruzadas, no se puede cambiar de carril.",True
+eval-11,"p. 100: Nunca cruce las líneas amarillas dobles, o cuando sólo una es concentral, o continua de su lado.",True
+eval-12,"p. 49: Si hay luz roja intermitente encendida en una dirección, equivale a una señal de PARE.",True
+eval-13,p. 49: Si enciende intermitentemente indica prevención y equivale a una señal de CEDA EL PASO.,True
+eval-14,"p. 49: Con luz amarilla detenerse si se estima que no alcanzará a trasponer el cruce, si la luz amarilla lo sorprende tan próximo al cruce que ya no puede detenerse con suficiente seguridad, deberá continuar con precaución.",True
+eval-15,"p. 55: Generalmente, todo ese tiempo de reacción, medido en un laboratorio, insume entre ½ y ¾ de segundo, en zona urbana, y hasta 2½”, en zona rural.",True
+eval-15,"p. 64: Recuerde que el “tiempo de reacción” de un conductor tipo, varía entre ½ a 2 ½ segundos, de acuerdo con la atención que esté prestando, su edad, etc.",True
+eval-16,"p. 57: Zona urbana, avenidas, todos los vehículos: velocidad máxima 60 km/h, mínima 30 km/h.",True
+eval-17,"p. 57: LÍMITES MÁXIMOS Y MÍNIMOS DE VELOCIDAD Zona urbana, calles, todos los vehículos: velocidad máxima 40 km/h, mínima 20 km/h.",True
+eval-18,"p. 71: Piso muy resbaladizo [...] el piso de menor adherencia. Reduzca la velocidad, triplique la distancia de seguridad y hasta detenga la marcha si es necesario.",False
+eval-18,"p. 72: La acumulación de agua en la calzada [...] produce el hidroplaneo (aquaplanig), despegando los neumáticos del piso y haciendo indomable el vehículo.",False
+eval-18,"p. 72: Encender las luces de posición y bajas, por intensidad de la lluvia y aún de día, para hacerse ver.",True
+eval-19,"p. 72: NIEBLA O HUMO: mismos efectos, muy Bajar velocidad. Triplicar distancia peligrosos por lo imprevisible. de seguridad. Poner luces bajas y de La adherencia en estos casos es emergencia.",True
+eval-20,p. 74: BALIZA: colóquelas para que queden visibles para quien deba advertir la presencia irregular de su vehículo.,True
+eval-21,"p. 79: Si siente sueño o somnolencia, busque un lugar seguro, lejos de la calzada y duerma una siesta.",True
+eval-21,"p. 110: Detenerse (salvo emergencia) en banquina, curvas, cruces u otros lugares peligrosos.",True
+eval-22,"p. 86: Cuando los medicamentos ingeridos alteran los parámetros normales, no se debe conducir.",True
+eval-23,p. 91: EL CONDUCTOR DEBE PORTAR Licencia Habilitante de la clase correspondiente. Comprobante de póliza de seguro vigente. La oblea de la VTV en vigencia. Cédula verde de identificación del automotor.,True
+eval-24,"p. 97: …D ERECHO DE PASO ¿Quién tiene derecho a pasar primero en una esquina? EL QUE VIENE POR LA DERECHA. Tratándose de conductores, el que recibe a otro por su derecha, en una intersección, debe cederle el paso siempre.",True
+eval-25,"p. 100: Debe hacerse por la izquierda, salvo: si el de adelante indica que va a girar o detenerse sobre ese lado, o en una congestión su fila es más rápida, o va por una autopista.",False
+eval-26,"p. 105: Aquí la prioridad de paso la tiene el que circula por ella sobre el que intenta ingresar (aunque siempre viene de la derecha), pero debe cederla ante el que egresa, salvo señalización en contrario.",True
+eval-27,p. 115: Por ello se deben inspeccionar los elementos relacionados con la seguridad y emisión de contaminantes.,True
+eval-28,"p. 124: La seguridad pasiva es la que atenúa o evita que se agraven las consecuencias de un siniestro, una vez que éste ha sucedido.",True
+eval-28,"p. 124: La seguridad activa o primaria, es la que trata de evitar que ocurra el siniestro.",True
+eval-29,p. 174: Nunca puede ser mayor de 12 horas.,True
+eval-29,p. 88: Esta retención no puede exceder las 12 horas.,True
+eval-30,p. 174: RETENCIÓN A LAS LICENCIAS HABILITANTES Estén vencidas. No se ajusten a los límites de edad que correspondan. Estén vencidas por cambio de datos no denunciados oportunamente. Cuando hayan sido adulteradas. Cuando exista una evidente violación a los requisitos que exige la ley.,True
+eval-30,"p. 175: la Autoridad de Comprobación o Aplicación retendrá la licencia para conducir a los infractores y la reemplazará con la entrega en ese mismo acto, De la Boleta de Citación al Inculpado.",True
+eval-30,p. 176: Dicha boleta habilitará al inculpado para conducir sólo por un plazo máximo de treinta (30) días corridos contados a partir del día de su confección.,True

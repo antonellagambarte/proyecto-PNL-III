@@ -1,6 +1,32 @@
-"""Tests de la evaluación de la búsqueda. Usan metadatos inventados, no el manual real."""
+"""Tests de la evaluación de la búsqueda. Usan metadatos y textos inventados, no el manual real."""
 
-from src.rag.evaluators.busqueda import a_paginas
+from src.rag.evaluators.busqueda import a_paginas, context_recall, partes, revisar_evidencias
+
+
+def test_partes():
+    """Saca la página del principio, normaliza el texto y separa lo que saltea un «[...]»."""
+    assert partes("p. 57: En AVENIDAS, la máxima es 60 km/h.") == ["en avenidas la maxima es 60 km h"]
+    assert partes("p. 71: Piso muy resbaladizo [...] el piso de menor adherencia.") == [
+        "piso muy resbaladizo", "el piso de menor adherencia"]
+    assert partes("p. 56–57: Calles: 40 km/h.") == ["calles 40 km h"]
+
+
+def test_context_recall():
+    """Cuenta qué parte de las evidencias traen los fragmentos. Una evidencia con partes necesita todas."""
+    fragmentos = ["en avenidas la maxima es 60 km h", "piso muy resbaladizo y mojado"]
+    una = partes("p. 57: La máxima es 60 km/h.")
+    partida = partes("p. 71: Piso muy resbaladizo [...] menor adherencia.")
+    assert context_recall([una], fragmentos) == 1.0
+    assert context_recall([una, partida], fragmentos) == 0.5  # a la segunda le falta «menor adherencia»
+    assert context_recall([partida], fragmentos + ["el de menor adherencia"]) == 1.0
+    assert context_recall([], fragmentos) is None
+
+
+def test_revisar_evidencias():
+    """Una frase que no está tal cual en ningún fragmento queda marcada para no medirla."""
+    preguntas = [{"id": "eval-01", "evidencia": ["p. 57: La máxima es 60 km/h.", "p. 100: Debe hacerse por la izquierda."]}]
+    tabla = revisar_evidencias(preguntas, ["en avenidas la maxima es 60 km h"])
+    assert tabla["buscable"].tolist() == [True, False]
 
 
 def test_a_paginas():

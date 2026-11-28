@@ -3,16 +3,63 @@
 Adaptado de la evaluación de la búsqueda del código de la cátedra. Lo que cambia: se
 comparan cuatro variantes en lugar de dos (antes y después del re-ranking), los
 fragmentos se convierten en páginas del manual y se mide cuánto tarda cada búsqueda.
+Además, si los fragmentos traen las frases de la respuesta: Non-LLM Context Recall, adaptado de RAGAS.
 """
 
 import logging
+import re
 import time
+import unicodedata
 
 import pandas as pd
 
 from src.rag.evaluators.metricas import mrr, ndcg_at_k, precision_at_k, recall_at_k
 
 log = logging.getLogger(__name__)
+
+# Cada frase de evidencia empieza con su página, «p. 57: » o «p. 56–57: », y puede saltear texto con «[...]».
+PAGINA_DE_EVIDENCIA = re.compile(r"^p\. \d+(?:–\d+)?: ")
+SALTEO = re.compile(r"\[(?:\.\.\.|…)\]")
+
+
+def comparable(texto: str) -> str:
+    """El texto en minúsculas, sin tildes ni signos: solo letras y números separados por un espacio."""
+    sin_tildes = unicodedata.normalize("NFKD", texto.lower())
+    sin_tildes = "".join(c for c in sin_tildes if not unicodedata.combining(c))
+    return " ".join(re.findall(r"[a-z0-9]+", sin_tildes))
+
+
+def partes(evidencia: str) -> list[str]:
+    """Lo que hay que buscar de una frase de evidencia, sin la página del principio.
+
+    Si la frase saltea texto con «[...]», cada parte se busca por separado, pero siguen siendo una sola evidencia.
+    """
+    sin_pagina = PAGINA_DE_EVIDENCIA.sub("", evidencia)
+    return [parte for parte in (comparable(p) for p in SALTEO.split(sin_pagina)) if parte]
+
+
+def esta(evidencia: list[str], textos: list[str]) -> bool:
+    """Si todas las partes de la evidencia aparecen, tal cual, en alguno de los textos."""
+    return all(any(parte in texto for texto in textos) for parte in evidencia)
+
+
+def context_recall(evidencias: list[list[str]], textos: list[str]) -> float | None:
+    """Non-LLM Context Recall, adaptado de RAGAS: qué parte de las evidencias traen los fragmentos.
+
+    RAGAS compara con un parecido de texto. Acá la evidencia tiene que estar entera. None si no hay evidencias.
+    """
+    if not evidencias:
+        return None
+    return sum(esta(evidencia, textos) for evidencia in evidencias) / len(evidencias)
+
+
+def revisar_evidencias(preguntas: list[dict], fragmentos: list[str]) -> pd.DataFrame:
+    """Qué frases de evidencia se pueden medir: las que están, tal cual, en algún fragmento del manual.
+
+    Las que no, no se encontrarían nunca (por ejemplo, si la lectura del PDF mezcló el texto) y quedan afuera.
+    """
+    return pd.DataFrame([{"id": pregunta["id"], "evidencia": evidencia, "buscable": esta(partes(evidencia), fragmentos)}
+                         for pregunta in preguntas for evidencia in pregunta.get("evidencia", [])])
 
 
 def a_paginas(metadatos: list[dict], relevantes: set[int]) -> list[int]:
@@ -26,6 +73,11 @@ def a_paginas(metadatos: list[dict], relevantes: set[int]) -> list[int]:
         ocupa = range(metadata["pagina_inicio"], metadata["pagina_fin"] + 1)
         paginas.append(next((p for p in ocupa if p in relevantes), metadata["pagina_inicio"]))
     return list(dict.fromkeys(paginas))
+
+
+def corpus(buscador) -> dict[str, str]:
+    """El texto de cada fragmento del manual, listo para buscar frases con comparable."""
+    return {id_: comparable(chunk["texto"]) for id_, chunk in buscador.chunks.items()}
 
 
 def buscar_variantes(buscador, consulta: str, k: int) -> dict[str, tuple[list[str], float]]:
@@ -48,13 +100,16 @@ def evaluar(buscador, preguntas: list[dict], ks: tuple[int, ...]) -> tuple[pd.Da
     """Calcula las métricas de cada variante para cada pregunta, y sus promedios por variante y k.
 
     k cuenta fragmentos, como los que recibe el tutor: se toman los k primeros y recién
-    ahí se pasan a páginas.
+    ahí se pasan a páginas. El context recall usa solo las evidencias que se pueden medir.
     """
     if not preguntas or not ks or min(ks) <= 0:
         raise ValueError("Se necesitan preguntas y valores de k mayores que 0.")
+    textos = corpus(buscador)
     filas = []
     for pregunta in preguntas:
         relevantes = set(pregunta["paginas"])
+        evidencias = [partes(e) for e in pregunta.get("evidencia", [])]
+        evidencias = [e for e in evidencias if esta(e, list(textos.values()))]
         for variante, (ids, segundos) in buscar_variantes(buscador, pregunta["pregunta"], max(ks)).items():
             metadatos = [buscador.chunks[id_]["metadata"] for id_ in ids]
             for k in ks:
@@ -68,6 +123,7 @@ def evaluar(buscador, preguntas: list[dict], ks: tuple[int, ...]) -> tuple[pd.Da
                     "recall": recall_at_k(paginas, relevantes, k),
                     "ndcg": ndcg_at_k(paginas, relevantes, k),
                     "mrr": mrr(paginas, relevantes),
+                    "context_recall": context_recall(evidencias, [textos[id_] for id_ in ids[:k]]),
                     "segundos": segundos,
                 })
     por_pregunta = pd.DataFrame(filas)
