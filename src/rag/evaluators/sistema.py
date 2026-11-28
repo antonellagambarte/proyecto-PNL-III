@@ -1,11 +1,8 @@
-"""Evaluación del sistema completo, pregunta por pregunta.
+"""Evaluación del sistema completo.
 
-Cada respuesta se mide con reglas, sin otro LLM: si respondió bien (en las de opciones, si eligió
-la correcta, y en las libres, si trae el dato clave), tanto la respuesta final como el borrador del
-tutor en la primera vuelta (lo que respondería el tutor solo, sin el verificador), si citó alguna
-de las páginas esperadas, qué hizo la segunda vuelta,
-cuánto tardó, cuántos tokens usó y cuánto costó. Después, el resumen de la corrida y los
-reportes para leer.
+Mide cada respuesta con reglas, sin otro LLM: si acertó (la respuesta final y el borrador del
+tutor), si citó la página esperada, qué hizo la segunda vuelta, cuánto tardó y cuánto costó.
+Después arma el resumen y los reportes.
 """
 
 import json
@@ -146,12 +143,7 @@ def medir(sistema, preguntas: list[dict], config: dict, conjunto: str) -> tuple[
 
 
 def similitud(modelo, respuestas: list[str], esperadas: list[str]) -> list[float]:
-    """Parecido de significado entre cada respuesta y la esperada: la similitud coseno entre sus embeddings.
-
-    Es el cálculo de la métrica Semantic Similarity de RAGAS. El coseno va de -1 a 1, pero con este
-    modelo los valores quedan entre 0,7 y 1, como explica su página: lo que importa es comparar
-    entre respuestas, no el número suelto.
-    """
+    """Semantic similarity entre cada respuesta y la esperada: el coseno entre sus embeddings."""
     from sentence_transformers import util
 
     # El modelo e5 pide el prefijo «query: » cuando se comparan dos textos del mismo tipo.
@@ -166,7 +158,11 @@ def de(columna: pd.Series) -> str:
 
 
 def resumir(nombre: str, tabla: pd.DataFrame) -> dict:
-    """Lo principal de una corrida: aciertos, medianas (p50), percentil 95 (p95) y totales."""
+    """Lo principal de una corrida: aciertos, promedios, medianas (p50), percentil 95 (p95) y totales.
+
+    Lo que se suma (tokens y costo) y la calidad (semantic similarity) van en promedio por pregunta.
+    Los tiempos van en p50 y p95, porque una pregunta lenta distorsiona el promedio.
+    """
     p50 = lambda columna: tabla[columna].quantile(0.5)
     vueltas = tabla["segunda_vuelta"].dropna()
     return {
@@ -183,14 +179,14 @@ def resumir(nombre: str, tabla: pd.DataFrame) -> dict:
         "sin_respaldo": int((tabla["veredicto"] != "aprobada").sum()),
         "dos_vueltas": int((tabla["vueltas"] == 2).sum()),
         "arreglo_arruino": f"{int((vueltas == 'arreglo').sum())} / {int((vueltas == 'arruino').sum())}",
-        "parecido_p50": round(p50("parecido"), 2),
+        "parecido_promedio": round(tabla["parecido"].mean(), 2),
         "segundos_p50": round(p50("segundos"), 1),
         "segundos_p95": round(tabla["segundos"].quantile(0.95), 1),
         "tutor_p50": round(p50("segundos_tutor"), 1),
         "verificador_p50": round(p50("segundos_verificador"), 1),
-        "entrada_p50": round(p50("tokens_entrada")),
-        "salida_p50": round(p50("tokens_salida")),
-        "costo_p50": round(p50("costo"), 5),
+        "entrada_promedio": round(tabla["tokens_entrada"].mean()),
+        "salida_promedio": round(tabla["tokens_salida"].mean()),
+        "costo_promedio": round(tabla["costo"].mean(), 5),
         "costo_total": round(tabla["costo"].sum(), 4),
     }
 
@@ -207,19 +203,19 @@ NOMBRES = {
     "aciertos": "Aciertos", "aciertos_opciones": "Aciertos con opciones", "aciertos_libres": "Aciertos libres (dato clave)",
     "aciertos_tutor_solo": "Aciertos del tutor solo",
     "cita_pagina": "Cita la página esperada", "sin_respaldo": "Sin respaldo", "dos_vueltas": "Con 2 vueltas",
-    "arreglo_arruino": "La 2.ª vuelta arregló / arruinó", "parecido_p50": "Parecido p50",
+    "arreglo_arruino": "La 2.ª vuelta arregló / arruinó", "parecido_promedio": "Semantic similarity (promedio)",
     "segundos_p50": "Segundos p50", "segundos_p95": "Segundos p95",
     "tutor_p50": "Tutor p50 (s)", "verificador_p50": "Verificador p50 (s)",
-    "entrada_p50": "Tokens de entrada p50", "salida_p50": "Tokens de salida p50",
-    "costo_p50": "Costo p50 (US$)", "costo_total": "Costo total (US$)",
+    "entrada_promedio": "Tokens de entrada (promedio)", "salida_promedio": "Tokens de salida (promedio)",
+    "costo_promedio": "Costo por pregunta (promedio, US$)", "costo_total": "Costo total (US$)",
 }
 
 EXPLICACION = [
-    "- **p50** es la mediana: la mitad de las preguntas tarda (o gasta) eso o menos. **p95**: solo 5 de cada 100 tardan más.",
+    "- **p50 y p95:** mediana y percentil 95.",
     "- **Acierto:** en las de opciones, elegir la correcta. En las libres, que la respuesta traiga el dato clave (`clave` en el archivo de preguntas).",
-    "- **Tutor solo** es el borrador del tutor en la primera vuelta, antes de que lo revise el verificador.",
-    "- **Parecido** es la similitud de significado (coseno entre embeddings, como Semantic Similarity de RAGAS) entre la respuesta y la esperada, con el modelo de la búsqueda. Con este modelo los valores quedan entre 0,7 y 1: sirve para comparar, no como porcentaje de acierto.",
-    "- El costo usa los precios de `configs/config.yaml` y no descuenta la caché de OpenAI: es un techo.",
+    "- **Tutor solo:** el borrador de la primera vuelta, antes del verificador. Muestra cuántas habría acertado el sistema sin verificador.",
+    "- **Semantic similarity:** coseno entre los embeddings de la respuesta y de la esperada, con el modelo de la búsqueda.",
+    "- **Costo:** con los precios de `configs/config.yaml`, sin el descuento de OpenAI por caché. El costo real puede ser algo menor.",
 ]
 
 
@@ -231,18 +227,13 @@ def tabla_md(filas: list[dict], columnas: dict) -> list[str]:
     return renglones
 
 
-def markdown_corrida(nombre: str, tabla: pd.DataFrame, modelo_solo: str | None) -> str:
+def markdown_corrida(nombre: str, tabla: pd.DataFrame) -> str:
     """El reporte de una corrida: los totales arriba y una fila por pregunta abajo."""
     resumen = resumir(nombre, tabla)
-    variantes = [
-        {"variante": "Modelo solo, sin el manual", "aciertos": modelo_solo or "falta correr `scripts.evaluar_modelo_solo`"},
-        {"variante": "Tutor solo, sin el verificador", "aciertos": resumen["aciertos_tutor_solo"]},
-        {"variante": "Sistema completo", "aciertos": resumen["aciertos"]},
-    ]
     por_pregunta = {
         "id": "Id", "forma": "Forma", "acierta": "¿Acertó?", "acierta_tutor_solo": "Tutor solo",
         "cita_pagina": "¿Citó la página?", "vueltas": "Vueltas", "segunda_vuelta": "2.ª vuelta",
-        "veredicto": "Veredicto", "parecido": "Parecido", "segundos": "Segundos",
+        "veredicto": "Veredicto", "parecido": "Semantic similarity", "segundos": "Segundos",
         "tokens_entrada": "Tokens de entrada", "tokens_salida": "Tokens de salida", "costo": "Costo (US$)",
     }
     tipos = []
@@ -263,10 +254,6 @@ def markdown_corrida(nombre: str, tabla: pd.DataFrame, modelo_solo: str | None) 
         "",
         *tabla_md([{"medida": NOMBRES[c], "valor": v} for c, v in resumen.items() if c != "corrida"],
                   {"medida": "Medida", "valor": "Valor"}),
-        "",
-        "## Tres variantes",
-        "",
-        *tabla_md(variantes, {"variante": "Variante", "aciertos": "Aciertos"}),
         "",
         *tipos,
         "## Por pregunta",

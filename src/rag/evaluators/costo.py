@@ -1,13 +1,12 @@
 """Costo y latencia de cada pregunta: tokens, dólares y segundos de cada agente.
 
-El costo sale de los tokens que informa OpenAI en cada respuesta y de los precios de
-config.yaml. Es un techo: no descuenta los tokens que OpenAI cobra más barato porque ya los
-tiene en su caché (se anotan aparte, en tokens_en_cache).
+El costo es tokens por precio (los de config.yaml, de la página de OpenAI). No descuenta
+la caché de OpenAI, así que el real puede ser algo menor.
 """
 
 
 def costo(tokens_entrada: int, tokens_salida: int, precios: dict) -> float:
-    """Dólares de una pregunta. Los precios son por millón de tokens."""
+    """Dólares de una pregunta. Los precios son por millón de tokens, por lo que se divide por 1_000_000."""
     return (tokens_entrada * precios["precio_entrada"] + tokens_salida * precios["precio_salida"]) / 1_000_000
 
 

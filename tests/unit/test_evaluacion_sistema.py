@@ -1,10 +1,9 @@
-"""Tests de la evaluación del sistema completo, del costo y del modelo solo. No usan el LLM."""
+"""Tests de la evaluación del sistema completo, del costo y del juez. No usan el LLM."""
 
 import pandas as pd
 
 from src.rag.evaluators.costo import costo, segundos_por_agente, tokens
 from src.rag.evaluators.juez import markdown_juez
-from src.rag.evaluators.modelo_solo import Eleccion, responder_sin_manual
 from src.rag.evaluators.sistema import (acierta, cita_pagina, markdown_corrida, markdown_corridas, medir,
                                         resumir, segunda_vuelta, similitud)
 from tests.unit.test_auditoria import sistema_falso
@@ -95,7 +94,7 @@ def test_medir(tmp_path):
 
 
 def test_reportes():
-    """El resumen cuenta aciertos y medianas, y los reportes muestran las tres variantes y una fila por corrida."""
+    """El resumen cuenta aciertos y medianas, y los reportes muestran los totales y una fila por corrida."""
     tabla = pd.DataFrame([
         {"id": "eval-01", "forma": "opciones", "veredicto": "aprobada", "vueltas": 1, "acierta": True,
          "acierta_tutor_solo": True, "cita_pagina": True, "segunda_vuelta": None, "parecido": 0.9, "segundos": 5.0,
@@ -111,8 +110,8 @@ def test_reportes():
     assert resumen["aciertos_tutor_solo"] == "1 de 2"
     assert resumen["arreglo_arruino"] == "1 / 0"
     assert resumen["segundos_p50"] == 8.0
-    texto = markdown_corrida("antes", tabla, "33 de 35")
-    assert "| Modelo solo, sin el manual | 33 de 35 |" in texto
+    texto = markdown_corrida("antes", tabla)
+    assert "| Aciertos del tutor solo | 1 de 2 |" in texto
     assert "| eval-02 | opciones | Sí | **No** |" in texto
     assert "| antes | practica | 30 | 5 |" in markdown_corridas([resumen])
 
@@ -126,36 +125,9 @@ def test_por_tipo():
     tabla = pd.DataFrame([{**fila, "id": "test-01", "tipo": "dato", "acierta": True},
                           {**fila, "id": "test-19", "tipo": "no lo dice", "acierta": False},
                           {**fila, "id": "test-20", "tipo": "no lo dice", "acierta": True}])
-    texto = markdown_corrida("final", tabla, None)
+    texto = markdown_corrida("final", tabla)
     assert "| no lo dice | 2 | 1 de 2 | 2 de 2 |" in texto
     assert "| test-19 | no lo dice | libre | **No** |" in texto
-
-
-def test_modelo_solo():
-    """Las de opciones se miden por la opción y las libres por el dato clave. Si una llamada falla, cuenta como error y no como acierto."""
-    class Respuesta:
-        text = "En avenidas se puede ir a 80 km/h."
-
-    class Estructurado:
-        def batch(self, mensajes, config=None, return_exceptions=False):
-            self.mensajes = mensajes
-            return [Eleccion(opcion="90 días corridos desde su vencimiento."), TimeoutError()]
-
-    class LLMFalso:
-        estructurado = Estructurado()
-
-        def with_structured_output(self, esquema):
-            return self.estructurado
-
-        def batch(self, mensajes, config=None, return_exceptions=False):
-            return [Respuesta()]
-
-    llm = LLMFalso()
-    libre = {**LIBRE, "clave": [["60 km"]]}
-    filas = responder_sin_manual(llm, [CON_OPCIONES, libre, {**CON_OPCIONES, "id": "eval-03"}])
-    assert [(f["id"], f["acierta"], f["error"]) for f in filas] == [
-        ("eval-02", True, None), ("eval-37", False, None), ("eval-03", False, "TimeoutError")]
-    assert "Opciones:\n- 30 días." in llm.estructurado.mensajes[0][1].content
 
 
 def test_juez():
@@ -164,7 +136,7 @@ def test_juez():
         {"id": "eval-01", "relevancia": 1.0, "motivo_relevancia": "ok", "fidelidad": 0.5, "motivo_fidelidad": "inventa un dato"},
         {"id": "eval-02", "relevancia": 1.0, "motivo_relevancia": "ok", "fidelidad": None, "motivo_fidelidad": None},
     ])
-    texto = markdown_juez("antes", tabla)
+    texto = markdown_juez("antes", tabla, "gpt-5.4")
     assert "Mediana 1.00, promedio 1.00, con 1: 2 de 2." in texto
     assert "| eval-01 | 0.50 | inventa un dato |" in texto
 

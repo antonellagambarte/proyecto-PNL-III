@@ -1,24 +1,20 @@
-"""El reporte del juez: Answer Relevancy y Faithfulness de DeepEval, que usan un LLM como juez.
-
-Las métricas se calculan en scripts.juzgar_respuestas, que es el único lugar que importa
-DeepEval (no es dependencia del proyecto). Acá solo se resume lo que guardó.
-"""
+"""Arma el reporte del juez: Answer Relevancy y Faithfulness de DeepEval."""
 
 import pandas as pd
 
 METRICAS = {
-    "relevancia": "Answer Relevancy: si la respuesta contesta lo que se preguntó, sin irse por las ramas",
+    "relevancia": "Answer Relevancy: si la respuesta contesta lo que se preguntó",
     "fidelidad": "Faithfulness: si lo que afirma la respuesta está en los fragmentos que encontró el sistema",
 }
 
 
-def markdown_juez(nombre: str, tabla: pd.DataFrame, peores: int = 5) -> str:
+def markdown_juez(nombre: str, tabla: pd.DataFrame, modelo: str, conjunto: str = "practica", peores: int = 5) -> str:
     """Para cada métrica: mediana, promedio, cuántas sacaron 1 y las de puntaje más bajo con el motivo del juez."""
     renglones = [
         f"# Juez: {nombre}",
         "",
-        "Se genera con `uv run --with deepeval python -m scripts.juzgar_respuestas " + nombre + "`. "
-        "El juez es el mismo modelo del sistema, así que puede ser indulgente con sus propias respuestas.",
+        f"Se genera con `uv run --with deepeval==4.3.6 python -m scripts.juzgar_respuestas {nombre} {conjunto}`. "
+        f"Juez: {modelo}.",
         "",
     ]
     for metrica, explicacion in METRICAS.items():

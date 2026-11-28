@@ -29,7 +29,7 @@ busqueda:
   modelo_embeddings: intfloat/multilingual-e5-small              # búsqueda por significado
   modelo_reranking: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1   # reordena los candidatos
   max_por_seccion: 3        # chunks de una misma sección en los resultados, después del re-ranking (con 2, Recall@5 0,950; con 3, 0,975)
-  k_candidatos: 20          # candidatos de la búsqueda híbrida, antes del re-ranking (con 30 y con 20, 28 de 30 aciertos de promedio, pero con 20 tarda 6,2 s y no 6,7: reports/corridas.md)
+  k_candidatos: 20          # candidatos de la búsqueda híbrida, antes del re-ranking (con 20, 29 de 30 aciertos de promedio, y con 30, 28: reports/practica/corridas.md)
   k_fragmentos: 5           # fragmentos que recibe el tutor, después del re-ranking
 
 chunks:
@@ -40,6 +40,11 @@ evaluacion:
   ks: [5, 10]               # fragmentos que se miran al calcular las métricas (el tutor recibe 5)
   candidatos: [10, 15, 20, 30]   # cantidades de candidatos que se prueban para elegir k_candidatos
   fragmentos: [3, 4, 5]          # cantidades de fragmentos que se prueban para elegir k_fragmentos
+  # El juez de DeepEval es otro modelo, más grande, para que no juzgue sus propias respuestas.
+  # Precios en dólares por millón de tokens, de la tabla de DeepEval 4.3.6 (la misma da 0,10 y 0,50 para gpt-6-luna).
+  modelo_juez: gpt-5.4
+  precio_juez_entrada: 2.50
+  precio_juez_salida: 15.00
 
 rutas:
   manual_pdf: data/raw/manual_del_conductor.pdf
