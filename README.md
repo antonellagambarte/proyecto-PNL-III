@@ -1,27 +1,22 @@
 # Asistente de estudio para el examen teórico de conducir
 
-Asistente para estudiar el examen teórico de la licencia de conducir de la Provincia de Buenos Aires. Responde con el *Manual del conductor* (edición 2019) y cita la sección y la página de donde sale cada respuesta. Si el manual no trae la información, lo dice en lugar de responder de memoria.
+Asistente para estudiar el examen teórico de la licencia de conducir de la Provincia de Buenos Aires. Responde con el *Manual del conductor* (edición 2019) y cita la sección y la página de donde sale cada respuesta.
 
 ## Qué hace
 
 - **Búsqueda híbrida en el manual:** por palabras (BM25) y por significado (embeddings de `intfloat/multilingual-e5-small` en Chroma), combinadas con RRF y reordenadas con un re-ranker (`cross-encoder/mmarco-mMiniLMv2-L12-H384-v1`).
 - **Dos agentes en LangGraph:** el **tutor** busca en el manual y redacta la respuesta con citas. El **verificador** no busca: lee la respuesta junto con los mismos fragmentos que encontró el tutor y comprueba que todo lo que afirma esté en ellos, que las citas correspondan y, si hay opciones, que la elegida sea la que mejor coincide. Decide entre tres veredictos: *aprobada*, *corregir* (el tutor arregla la respuesta) o *buscar más* (el tutor vuelve a buscar, con una consulta que le sugiere el verificador). Hay como máximo dos vueltas: si en la segunda tampoco la aprueba, el sistema responde que no encontró respaldo suficiente, en lugar de dar una respuesta sin respaldo.
 - **Preguntas libres o de opción múltiple**, como las del cuestionario oficial.
-- **Memoria de la charla:** recuerda las preguntas anteriores de la misma sesión, así se puede repreguntar sin repetir todo. Por ejemplo, después de «¿Cuál es la velocidad máxima en avenidas?» alcanza con preguntar «¿y en autopista?». Cuando la charla se alarga, la resume.
-- **Seguridad:**
-  - **Entrada:** largo máximo, limpieza de caracteres invisibles y detección de intentos de inyección. Una pregunta rechazada no llega a los agentes ni a la memoria.
-  - **Agentes:** los fragmentos del manual y la charla se tratan como datos, nunca como instrucciones. El tutor tiene una sola herramienta, de solo lectura, y el verificador ninguna. El camino lo decide el código, con tope de vueltas y de búsquedas.
-  - **Salida:** formato fijo, citas armadas por el código (si ninguna corresponde a un fragmento encontrado, la respuesta no se muestra) y sin enlaces ni imágenes. Aviso de que el manual es de 2019.
+- **Memoria de la charla:** recuerda las preguntas anteriores de la misma sesión, así se puede repreguntar sin repetir todo. Cuando la charla se alarga, la resume.
+- **Seguridad**, siguiendo el [OWASP Top 10 para aplicaciones con LLM, versión 2026](https://genai.owasp.org/top-10-for-llm-applications-2026/):
+  - **Entrada:** *input size validation* (LLM06), limpieza de caracteres invisibles y detección de *prompt injection* (LLM01) y de pedidos del prompt del sistema (LLM08).
+  - **Agentes:** separación de datos e instrucciones (LLM01), *least privilege* (LLM03), *agentic circuit breakers* (LLM06): tope de vueltas y de búsquedas.
+  - **Salida:** *improper output handling* (LLM10), *misinformation* (LLM07).
   - **Registro:** auditoría de cada paso en `logs/auditoria.jsonl`, sin guardar el texto de preguntas ni respuestas.
   - **Pruebas:** 10 preguntas de ataque y fuera de tema (`scripts.probar_ataques`), que cumplen 10 de 10.
 - **API** con FastAPI y **pantalla** de chat con Streamlit.
 
-```
-Pantalla (Streamlit) → API (FastAPI) → control de entrada
-  → tutor: búsqueda híbrida y re-ranking → respuesta con citas
-  → verificador: ¿la respaldan los fragmentos? → aprobada, corregir o buscar más (hasta 2 vueltas)
-  → control de salida → respuesta con citas, o aviso de que no encontró respaldo
-```
+<img src="docs/architecture/flujo.png" alt="Flujo del sistema" width="500">
 
 ## Requisitos
 
@@ -70,31 +65,34 @@ curl -X POST http://127.0.0.1:8000/consultas -H "Content-Type: application/json"
 Las preguntas están en `data/processed/`:
 
 - `preguntas_eval.jsonl`: 30 de práctica, para ajustar el sistema.
-- `preguntas_test.jsonl`: 30 de test, que se corren una sola vez, con el sistema ya ajustado.
+- `preguntas_test.jsonl`: 30 de test, que se usan solo al final, con el sistema ya ajustado.
 - `preguntas_extra.jsonl`: 10 de ataque y fuera de tema.
 
 Cada pregunta trae las páginas del manual que la responden. En las de opción múltiple, acertar es elegir la correcta. En las libres, que la respuesta traiga el dato clave (campo `clave`).
 
 | Qué mide | Comando |
 |---|---|
-| La búsqueda sola: si encuentra las páginas correctas y cuánto tarda | `uv run python -m scripts.evaluar_busqueda [practica\|test]` |
+| La búsqueda sola: si encuentra las páginas y las frases de la respuesta, y cuánto tarda | `uv run python -m scripts.evaluar_busqueda [practica\|test]` |
 | El sistema completo: aciertos, citas, tiempos, tokens y costo | `uv run python -m scripts.evaluar_sistema <nombre> [practica\|test]` |
-| El modelo solo, sin el manual | `uv run python -m scripts.evaluar_modelo_solo [practica\|test]` |
-| Un LLM como juez (DeepEval): si la respuesta contesta lo preguntado y si se apoya en lo que encontró | `uv run --with deepeval python -m scripts.juzgar_respuestas <nombre>` |
+| Un LLM como juez (DeepEval): si la respuesta contesta lo preguntado y si se apoya en lo que encontró | `uv run --with deepeval==4.3.6 python -m scripts.juzgar_respuestas <nombre> [practica\|test]` |
 | Las preguntas de ataque y fuera de tema | `uv run python -m scripts.probar_ataques` |
 
-Todas menos la primera usan el LLM: cada corrida cuesta entre 1 y 3 centavos de dólar. Los resultados quedan en `reports/`, en CSV y en markdown. `reports/corridas.md` junta una fila por corrida del sistema completo, para comparar configuraciones.
+Los resultados quedan en `reports/practica/` y `reports/test/`, en CSV y en markdown, y los de ataque en `reports/`. En cada carpeta, `corridas.md` junta una fila por corrida del sistema completo, para comparar.
 
 ## Configuración
 
-Todo lo que se puede ajustar está en `configs/config.yaml`, con comentarios:
+Todo lo que se puede ajustar está en `configs/config.yaml`:
 
-- `llm`: modelo, tiempo máximo de espera, reintentos y precios por millón de tokens.
-- `agentes`: vueltas entre tutor y verificador, y búsquedas del tutor en cada vuelta.
-- `busqueda`: modelos de embeddings y de re-ranking, candidatos antes del re-ranking, fragmentos que recibe el tutor y tope por sección.
-- `chunks`, `memoria`, `entrada` y `pantalla`.
+- `llm`: modelo, tiempo máximo de espera, reintentos y precios por millón de tokens (para calcular el costo).
+- `agentes`: máximo de vueltas entre tutor y verificador, y de búsquedas del tutor en cada vuelta.
+- `busqueda`: modelos de embeddings y de re-ranking, cantidad de candidatos antes del re-ranking, cantidad de fragmentos que recibe el tutor y máximo por sección.
+- `chunks`: tamaño de los fragmentos del manual y solapamiento.
+- `memoria`: cuándo se resume la charla.
+- `entrada`: largo máximo de la pregunta.
+- `pantalla`: dirección de la API.
+- `evaluacion`, `rutas` y `logging`: lo que se prueba al evaluar, dónde están los archivos y el nivel de los logs.
 
-La API key va solo en `.env`, que no se sube al repositorio.
+La API key va en `.env`.
 
 ## Estructura
 
@@ -114,11 +112,10 @@ src/rag/evaluators/       métricas y evaluaciones
 src/tools/builtin/        la herramienta de búsqueda del tutor
 src/common/               configuración, logs y auditoría
 tests/unit/               tests unitarios
-reports/                  resultados de las evaluaciones
+reports/                  resultados de las evaluaciones: practica/, test/ y los de ataque
 ```
 
 ## Limitaciones
 
-- El manual es de 2019: las normas pueden haber cambiado, y la pantalla lo avisa.
-- Responde solo con lo que encuentra en el manual. Si la búsqueda no trae el fragmento justo, puede decir que no encontró la información aunque esté.
+- El manual es de 2019: las normas pueden haber cambiado.
 - Depende de la API de OpenAI: sin conexión o sin crédito no responde.
