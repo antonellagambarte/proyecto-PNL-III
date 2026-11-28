@@ -29,7 +29,7 @@ busqueda:
   modelo_embeddings: intfloat/multilingual-e5-small              # búsqueda por significado
   modelo_reranking: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1   # reordena los candidatos
   max_por_seccion: 3        # chunks de una misma sección en los resultados, después del re-ranking (con 2, Recall@5 0,950; con 3, 0,975)
-  k_candidatos: 30          # candidatos de la búsqueda híbrida, antes del re-ranking
+  k_candidatos: 20          # candidatos de la búsqueda híbrida, antes del re-ranking (con 30 y con 20, 28 de 30 aciertos de promedio, pero con 20 tarda 6,2 s y no 6,7: reports/corridas.md)
   k_fragmentos: 5           # fragmentos que recibe el tutor, después del re-ranking
 
 chunks:
