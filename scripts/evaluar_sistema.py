@@ -4,12 +4,13 @@ Uso, desde la raíz del proyecto:
     uv run python -m scripts.evaluar_sistema <nombre> [practica|test]
 
 El nombre identifica la corrida (por ejemplo antes y despues de un cambio en config.yaml).
-El conjunto es practica (las de ajuste) o test (el test final). Usa el LLM: con las 40 de
-práctica cuesta alrededor de cinco centavos. Guarda en reports/:
+El conjunto es practica (las de ajuste) o test (el test final). Usa el LLM: con las 30 de
+práctica cuesta unos tres centavos. Guarda en reports/:
 - evaluacion_<nombre>.csv y .md: una fila por pregunta, con aciertos, citas, vueltas,
   tiempos, tokens y costo, y los totales.
-- respuestas_<nombre>.jsonl: pregunta, respuesta y fragmentos, para juzgarlas con
-  scripts.juzgar_respuestas.
+- respuestas_<nombre>.jsonl: pregunta, respuesta, fragmentos y lo que hizo cada agente en cada
+  vuelta (con el motivo del verificador), para juzgarlas con scripts.juzgar_respuestas y para
+  leer por qué falló una pregunta.
 - corridas.md: una fila por corrida, para comparar antes y después.
 """
 

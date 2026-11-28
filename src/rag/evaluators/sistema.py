@@ -102,11 +102,13 @@ def evaluar(pregunta: dict, respuesta: dict) -> dict:
         "acierta_tutor_solo": acierta(pregunta, *borrador_del_tutor(respuesta["registro"])),
         "cita_pagina": cita_pagina(pregunta, respuesta["citas"]),
         "segunda_vuelta": segunda_vuelta(pregunta, respuesta),
+        # Solo las preguntas del test tienen tipo (dato, combinar, premisa falsa, no lo dice, cuestionario).
+        **({"tipo": pregunta["tipo"]} if "tipo" in pregunta else {}),
     }
 
 
 def medir(sistema, preguntas: list[dict], config: dict, conjunto: str) -> tuple[list[dict], list[dict]]:
-    """Responde cada pregunta y devuelve una fila con lo medido, y los textos para el juez."""
+    """Responde cada pregunta y devuelve una fila con lo medido, y los textos para el juez y para leer qué pasó."""
     filas, textos = [], []
     for pregunta in preguntas:
         # Una sesión nueva por pregunta: no arrastra charla y permite encontrar sus pasos en la auditoría.
@@ -131,6 +133,8 @@ def medir(sistema, preguntas: list[dict], config: dict, conjunto: str) -> tuple[
         textos.append({
             "id": pregunta["id"], "pregunta": pregunta["pregunta"], "esperada": pregunta["correcta"],
             "respuesta": respuesta["respuesta"], "fragmentos": [f.texto for f in estado.get("fragmentos", [])],
+            # Lo que hizo cada agente en cada vuelta, con el veredicto y el motivo del verificador.
+            "registro": respuesta["registro"],
         })
         log.info("%s: %.1f s", pregunta["id"], segundos)
 
@@ -191,6 +195,13 @@ def resumir(nombre: str, tabla: pd.DataFrame) -> dict:
     }
 
 
+def por_tipo(tabla: pd.DataFrame) -> list[dict]:
+    """Los aciertos de cada tipo de pregunta, para ver en qué clase de pregunta falla."""
+    return [{"tipo": tipo, "preguntas": len(grupo), "aciertos": de(grupo["acierta"]),
+             "tutor_solo": de(grupo["acierta_tutor_solo"])}
+            for tipo, grupo in tabla.groupby("tipo", sort=False)]
+
+
 NOMBRES = {
     "corrida": "Corrida", "conjunto": "Preguntas de", "candidatos": "Candidatos", "fragmentos": "Fragmentos", "preguntas": "Preguntas",
     "aciertos": "Aciertos", "aciertos_opciones": "Aciertos con opciones", "aciertos_libres": "Aciertos libres (dato clave)",
@@ -234,6 +245,12 @@ def markdown_corrida(nombre: str, tabla: pd.DataFrame, modelo_solo: str | None) 
         "veredicto": "Veredicto", "parecido": "Parecido", "segundos": "Segundos",
         "tokens_entrada": "Tokens de entrada", "tokens_salida": "Tokens de salida", "costo": "Costo (US$)",
     }
+    tipos = []
+    if "tipo" in tabla:
+        por_pregunta = {"id": "Id", "tipo": "Tipo", **por_pregunta}
+        tipos = ["## Por tipo de pregunta", "",
+                 *tabla_md(por_tipo(tabla), {"tipo": "Tipo", "preguntas": "Preguntas", "aciertos": "Aciertos",
+                                             "tutor_solo": "Tutor solo"}), ""]
     filas = tabla.replace({True: "Sí", False: "**No**"}).to_dict("records")
     return "\n".join([
         f"# Evaluación: {nombre}",
@@ -251,6 +268,7 @@ def markdown_corrida(nombre: str, tabla: pd.DataFrame, modelo_solo: str | None) 
         "",
         *tabla_md(variantes, {"variante": "Variante", "aciertos": "Aciertos"}),
         "",
+        *tipos,
         "## Por pregunta",
         "",
         *tabla_md(filas, por_pregunta),

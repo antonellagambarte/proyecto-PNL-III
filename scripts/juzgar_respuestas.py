@@ -8,7 +8,7 @@ aparte para esta corrida, sin tocar las versiones del proyecto. Uso, desde la ra
     uv run --with deepeval python -m scripts.juzgar_respuestas <nombre>
 
 Lee reports/respuestas_<nombre>.jsonl, que deja scripts.evaluar_sistema. Usa el LLM: con las
-40 de práctica cuesta unos tres centavos. Guarda reports/juez_<nombre>.csv y .md.
+30 de práctica cuesta menos de tres centavos. Guarda reports/juez_<nombre>.csv y .md.
 """
 
 import os

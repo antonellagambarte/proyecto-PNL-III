@@ -80,7 +80,7 @@ def test_segunda_vuelta():
 
 
 def test_medir(tmp_path):
-    """Con el sistema falso: una fila por pregunta con lo medido, los segundos de cada agente y los fragmentos."""
+    """Con el sistema falso: una fila por pregunta con lo medido, los segundos de cada agente, los fragmentos y el registro de cada vuelta."""
     config = {"llm": {"modelo": "falso", **PRECIOS}, "busqueda": {"k_candidatos": 30, "k_fragmentos": 5}}
     filas, textos = medir(sistema_falso(tmp_path, "corregir", "aprobada"), [LIBRE], config, "practica")
     assert filas[0]["vueltas"] == 2
@@ -90,6 +90,8 @@ def test_medir(tmp_path):
     assert "sesion" not in filas[0]
     assert textos[0]["respuesta"] == "60 km/h"
     assert textos[0]["fragmentos"] == ["Avenidas: máxima 60 km/h."]
+    assert [paso["agente"] for paso in textos[0]["registro"]] == [
+        "tutor", "verificador", "tutor", "verificador", "control_salida"]
 
 
 def test_reportes():
@@ -113,6 +115,20 @@ def test_reportes():
     assert "| Modelo solo, sin el manual | 33 de 35 |" in texto
     assert "| eval-02 | opciones | Sí | **No** |" in texto
     assert "| antes | practica | 30 | 5 |" in markdown_corridas([resumen])
+
+
+def test_por_tipo():
+    """Si las preguntas tienen tipo, como las del test, el reporte suma los aciertos de cada tipo."""
+    fila = {"forma": "libre", "veredicto": "aprobada", "vueltas": 1, "acierta_tutor_solo": True, "cita_pagina": None,
+            "segunda_vuelta": None, "parecido": 0.9, "segundos": 5.0, "segundos_tutor": 3.0, "segundos_verificador": 2.0,
+            "tokens_entrada": 5000, "tokens_salida": 300, "costo": 0.00065, "conjunto": "test", "k_candidatos": 20,
+            "k_fragmentos": 5}
+    tabla = pd.DataFrame([{**fila, "id": "test-01", "tipo": "dato", "acierta": True},
+                          {**fila, "id": "test-19", "tipo": "no lo dice", "acierta": False},
+                          {**fila, "id": "test-20", "tipo": "no lo dice", "acierta": True}])
+    texto = markdown_corrida("final", tabla, None)
+    assert "| no lo dice | 2 | 1 de 2 | 2 de 2 |" in texto
+    assert "| test-19 | no lo dice | libre | **No** |" in texto
 
 
 def test_modelo_solo():
